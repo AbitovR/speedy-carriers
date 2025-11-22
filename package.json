@@ -1,0 +1,17 @@
+{
+  "name": "speedy-carriers",
+  "version": "1.0.0",
+  "description": "Professional Driver Payment System",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site - no build needed'",
+    "start": "echo 'Starting on Vercel...'"
+  },
+  "keywords": [
+    "freight",
+    "logistics",
+    "driver-payments"
+  ],
+  "author": "Speedy Carriers",
+  "license": "MIT"
+}
