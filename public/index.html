@@ -298,6 +298,10 @@
                     <label>IFTA</label>
                     <input id="ifta" type="number" step="0.01" value="0" onchange="updateSettings()"/>
                 </div>
+                <div class="setting-group">
+                    <label>Local Towing</label>
+                    <input id="localTowing" type="number" step="0.01" value="0" onchange="updateSettings()"/>
+                </div>
             </div>
         </div>
 
@@ -324,7 +328,8 @@
             eldLogbook: 0,
             insurance: 0,
             fuel: 0,
-            ifta: 0
+            ifta: 0,
+            localTowing: 0
         };
 
         // Setup drag and drop
@@ -438,6 +443,7 @@
             settings.insurance = parseFloat(document.getElementById('insurance').value) || 0;
             settings.fuel = parseFloat(document.getElementById('fuel').value) || 0;
             settings.ifta = parseFloat(document.getElementById('ifta').value) || 0;
+            settings.localTowing = parseFloat(document.getElementById('localTowing').value) || 0;
             render();
         }
 
@@ -471,7 +477,7 @@
             const dispatchFeeAmount = totalGrossBeforeDeductions * settings.dispatchFee;
 
             // Total expenses (dispatch fee + other expenses)
-            const otherExpenses = settings.parking + settings.eldLogbook + settings.insurance + settings.fuel + settings.ifta;
+            const otherExpenses = settings.parking + settings.eldLogbook + settings.insurance + settings.fuel + settings.ifta + settings.localTowing;
             const totalExpenses = dispatchFeeAmount + otherExpenses;
             
             // Apply deductions proportionally to each payment method
@@ -610,6 +616,10 @@
         <tr>
             <td>IFTA</td>
             <td>-$${settings.ifta.toFixed(2)}</td>
+        </tr>
+        <tr>
+            <td>Local Towing</td>
+            <td>-$${settings.localTowing.toFixed(2)}</td>
         </tr>
         <tr style="border-bottom: 2px solid #ddd;">
             <td><strong>Total Expenses</strong></td>
@@ -761,6 +771,7 @@
                         ${settings.insurance > 0 ? `<div class="calc-row"><span>- Insurance</span><span>$${settings.insurance.toFixed(2)}</span></div>` : ''}
                         ${settings.fuel > 0 ? `<div class="calc-row"><span>- Fuel</span><span>$${settings.fuel.toFixed(2)}</span></div>` : ''}
                         ${settings.ifta > 0 ? `<div class="calc-row"><span>- IFTA</span><span>$${settings.ifta.toFixed(2)}</span></div>` : ''}
+                        ${settings.localTowing > 0 ? `<div class="calc-row"><span>- Local Towing</span><span>$${settings.localTowing.toFixed(2)}</span></div>` : ''}
                     </div>
 
                     <div class="calc-row bold highlight"><span>NET GROSS (After Expenses)</span><span style="color: #70AD47;">$${summary.totalGrossAfterDeductions.toFixed(2)}</span></div>
