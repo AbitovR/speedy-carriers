@@ -1,6 +1,5 @@
 {
   "buildCommand": "echo 'Static site - no build required'",
   "outputDirectory": "public",
-  "framework": "html",
-  "env": []
+  "framework": "html"
 }
