@@ -479,7 +479,11 @@
             // Total expenses (dispatch fee + other expenses)
             const otherExpenses = settings.parking + settings.eldLogbook + settings.insurance + settings.fuel + settings.ifta + settings.localTowing;
             const totalExpenses = dispatchFeeAmount + otherExpenses;
-            
+
+            // Driver/Owner percentage - calculated BEFORE expenses
+            const percentage = settings.driverType === 'owner' ? 0.90 : 0.32;
+            const driverPay = totalGrossBeforeDeductions * percentage;
+
             // Apply deductions proportionally to each payment method
             const cashShare = totalGrossBeforeDeductions > 0 ? cashGrossBeforeDeductions / totalGrossBeforeDeductions : 0;
             const checkShare = totalGrossBeforeDeductions > 0 ? checkGrossBeforeDeductions / totalGrossBeforeDeductions : 0;
@@ -489,15 +493,11 @@
             const checkExpenses = totalExpenses * checkShare;
             const billingExpenses = totalExpenses * billingShare;
 
-            // Gross AFTER deductions
+            // Gross AFTER deductions (for company)
             const totalGrossAfterDeductions = totalGrossBeforeDeductions - totalExpenses;
             const cashGrossAfterDeductions = cashGrossBeforeDeductions - cashExpenses;
             const checkGrossAfterDeductions = checkGrossBeforeDeductions - checkExpenses;
             const billingGrossAfterDeductions = billingGrossBeforeDeductions - billingExpenses;
-
-            // Driver/Owner percentage
-            const percentage = settings.driverType === 'owner' ? 0.90 : 0.32;
-            const driverPay = totalGrossAfterDeductions * percentage;
 
             return {
                 totalPrice,
@@ -541,10 +541,11 @@
             const driverType = settings.driverType === 'owner' ? 'Owner Operator' : 'Driver';
             const percent = settings.driverType === 'owner' ? '90%' : '32%';
             const paymentLabel = settings.driverType === 'owner' ? 'OWNER OPERATOR PAY' : 'DRIVER PAY';
+            const percentage = settings.driverType === 'owner' ? 0.90 : 0.32;
 
-            const cashPay = summary.cashGrossAfterDeductions * (settings.driverType === 'owner' ? 0.90 : 0.32);
-            const checkPay = summary.checkGrossAfterDeductions * (settings.driverType === 'owner' ? 0.90 : 0.32);
-            const billingPay = summary.billingGrossAfterDeductions * (settings.driverType === 'owner' ? 0.90 : 0.32);
+            const cashPay = summary.cashGrossBeforeDeductions * percentage;
+            const checkPay = summary.checkGrossBeforeDeductions * percentage;
+            const billingPay = summary.billingGrossBeforeDeductions * percentage;
 
             const htmlContent = `
 <!DOCTYPE html>
@@ -627,31 +628,43 @@
         </tr>
     </table>
 
-    <h3>GROSS BREAKDOWN BY PAYMENT METHOD (AFTER EXPENSES)</h3>
+    <h3>GROSS BREAKDOWN BY PAYMENT METHOD</h3>
     <table>
         <tr>
             <td>Cash (including COD)</td>
-            <td>$${summary.cashGrossAfterDeductions.toFixed(2)}</td>
+            <td>$${summary.cashGrossBeforeDeductions.toFixed(2)}</td>
         </tr>
         <tr>
             <td>Check/ACH</td>
-            <td>$${summary.checkGrossAfterDeductions.toFixed(2)}</td>
+            <td>$${summary.checkGrossBeforeDeductions.toFixed(2)}</td>
         </tr>
         <tr style="border-bottom: 2px solid #ddd;">
             <td>Billing/Credit</td>
-            <td>$${summary.billingGrossAfterDeductions.toFixed(2)}</td>
+            <td>$${summary.billingGrossBeforeDeductions.toFixed(2)}</td>
         </tr>
         <tr>
-            <td><strong>TOTAL NET GROSS</strong></td>
-            <td class="amount">$${summary.totalGrossAfterDeductions.toFixed(2)}</td>
+            <td><strong>TOTAL GROSS</strong></td>
+            <td class="amount">$${summary.totalGrossBeforeDeductions.toFixed(2)}</td>
         </tr>
     </table>
 
-    <h3>${driverType.toUpperCase()} EARNINGS (${percent} of Net Gross)</h3>
+    <h3>${driverType.toUpperCase()} EARNINGS (${percent} of Gross)</h3>
     <table>
         <tr style="border-bottom: 2px solid #ddd;">
             <td><strong>Total ${driverType} Earnings</strong></td>
             <td class="amount">$${summary.driverPay.toFixed(2)}</td>
+        </tr>
+    </table>
+
+    <h3>COMPANY EXPENSES (Paid by Company, NOT deducted from driver)</h3>
+    <table>
+        <tr>
+            <td><strong>Total Expenses</strong></td>
+            <td class="amount">$${summary.totalExpenses.toFixed(2)}</td>
+        </tr>
+        <tr style="border-bottom: 2px solid #ddd;">
+            <td><strong>Net to Company (After Driver Pay & Expenses)</strong></td>
+            <td class="amount">$${(summary.totalGrossBeforeDeductions - summary.driverPay - summary.totalExpenses).toFixed(2)}</td>
         </tr>
     </table>
 
@@ -725,31 +738,28 @@
                     <div class="amount">-$${summary.totalBrokerFee.toFixed(2)}</div>
                 </div>
                 <div class="summary-card">
-                    <h3>📊 Gross (Before Expenses)</h3>
+                    <h3>📊 Total Gross</h3>
                     <div class="amount">$${summary.totalGrossBeforeDeductions.toFixed(2)}</div>
                 </div>
                 <div class="summary-card">
-                    <h3>💸 Dispatch Fee (10%)</h3>
-                    <div class="amount">-$${summary.dispatchFeeAmount.toFixed(2)}</div>
-                </div>
-                <div class="summary-card">
-                    <h3>📌 Other Expenses</h3>
-                    <div class="amount">-$${summary.otherExpenses.toFixed(2)}</div>
-                </div>
-                <div class="summary-card">
-                    <h3>✅ Net Gross (After Expenses)</h3>
-                    <div class="amount" style="color: #70AD47;">$${summary.totalGrossAfterDeductions.toFixed(2)}</div>
-                </div>
-                <div class="summary-card">
                     <h3>💼 ${driverType}</h3>
-                    <div class="amount">$${summary.driverPay.toFixed(2)}</div>
+                    <div class="amount" style="color: #70AD47;">$${summary.driverPay.toFixed(2)}</div>
+                </div>
+                <div class="summary-card">
+                    <h3>💸 Total Company Expenses</h3>
+                    <div class="amount">-$${summary.totalExpenses.toFixed(2)}</div>
+                </div>
+                <div class="summary-card">
+                    <h3>✅ Net to Company</h3>
+                    <div class="amount">$${(summary.totalGrossBeforeDeductions - summary.driverPay - summary.totalExpenses).toFixed(2)}</div>
                 </div>
             `;
 
             const tripsList = document.getElementById('tripsList');
-            const cashPay = summary.cashGrossAfterDeductions * (settings.driverType === 'owner' ? 0.90 : 0.32);
-            const checkPay = summary.checkGrossAfterDeductions * (settings.driverType === 'owner' ? 0.90 : 0.32);
-            const billingPay = summary.billingGrossAfterDeductions * (settings.driverType === 'owner' ? 0.90 : 0.32);
+            const percentage = settings.driverType === 'owner' ? 0.90 : 0.32;
+            const cashPay = summary.cashGrossBeforeDeductions * percentage;
+            const checkPay = summary.checkGrossBeforeDeductions * percentage;
+            const billingPay = summary.billingGrossBeforeDeductions * percentage;
 
             tripsList.innerHTML = `
                 <div style="margin-bottom: 20px;">
@@ -761,10 +771,16 @@
                     <h4 style="color: #70AD47; margin-bottom: 15px;">Complete Breakdown</h4>
                     <div class="calc-row"><span>Total Invoice Price</span><span><strong>$${summary.totalPrice.toFixed(2)}</strong></span></div>
                     <div class="calc-row"><span>- Broker Fee</span><span>-$${summary.totalBrokerFee.toFixed(2)}</span></div>
-                    <div class="calc-row bold"><span>Gross (Before Expenses)</span><span>$${summary.totalGrossBeforeDeductions.toFixed(2)}</span></div>
-                    
+                    <div class="calc-row bold"><span>Total Gross</span><span>$${summary.totalGrossBeforeDeductions.toFixed(2)}</span></div>
+
                     <div style="margin: 15px 0;">
-                        <div style="font-weight: 600; color: #70AD47; margin-bottom: 10px;">Expenses (Deducted from Gross):</div>
+                        <div style="font-weight: 600; color: #70AD47; margin-bottom: 10px;">Driver/Owner Payment (from Gross):</div>
+                        <div class="calc-row"><span>× Driver/Owner Share (${settings.driverType === 'owner' ? '90%' : '32%'})</span><span>=</span></div>
+                        <div class="calc-row bold highlight"><span style="color: #70AD47; font-weight: bold;">${settings.driverType === 'owner' ? 'OWNER OPERATOR EARNINGS' : 'DRIVER EARNINGS'}</span><span style="color: #70AD47; font-size: 18px; font-weight: bold;">$${summary.driverPay.toFixed(2)}</span></div>
+                    </div>
+
+                    <div style="margin: 15px 0;">
+                        <div style="font-weight: 600; color: #999; margin-bottom: 10px;">Company Expenses (NOT deducted from driver):</div>
                         <div class="calc-row"><span>- Dispatch Fee (10%)</span><span>$${summary.dispatchFeeAmount.toFixed(2)}</span></div>
                         ${settings.parking > 0 ? `<div class="calc-row"><span>- Parking</span><span>$${settings.parking.toFixed(2)}</span></div>` : ''}
                         ${settings.eldLogbook > 0 ? `<div class="calc-row"><span>- ELD/LogBook</span><span>$${settings.eldLogbook.toFixed(2)}</span></div>` : ''}
@@ -772,14 +788,16 @@
                         ${settings.fuel > 0 ? `<div class="calc-row"><span>- Fuel</span><span>$${settings.fuel.toFixed(2)}</span></div>` : ''}
                         ${settings.ifta > 0 ? `<div class="calc-row"><span>- IFTA</span><span>$${settings.ifta.toFixed(2)}</span></div>` : ''}
                         ${settings.localTowing > 0 ? `<div class="calc-row"><span>- Local Towing</span><span>$${settings.localTowing.toFixed(2)}</span></div>` : ''}
+                        <div class="calc-row bold"><span>Total Company Expenses</span><span>$${summary.totalExpenses.toFixed(2)}</span></div>
                     </div>
 
-                    <div class="calc-row bold highlight"><span>NET GROSS (After Expenses)</span><span style="color: #70AD47;">$${summary.totalGrossAfterDeductions.toFixed(2)}</span></div>
-                    <div class="calc-row"><span>× Driver/Owner Share (${settings.driverType === 'owner' ? '90%' : '32%'})</span><span>=</span></div>
-                    <div class="calc-row bold highlight"><span style="color: #70AD47; font-weight: bold;">${settings.driverType === 'owner' ? 'OWNER OPERATOR EARNINGS' : 'DRIVER EARNINGS'}</span><span style="color: #70AD47; font-size: 18px; font-weight: bold;">$${summary.driverPay.toFixed(2)}</span></div>
+                    <div class="calc-row bold" style="background: #f9f9f9; padding: 8px; margin: 8px 0; border-radius: 4px;">
+                        <span>Net to Company (Gross - Driver Pay - Expenses)</span>
+                        <span>$${(summary.totalGrossBeforeDeductions - summary.driverPay - summary.totalExpenses).toFixed(2)}</span>
+                    </div>
 
                     <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #ddd;">
-                        <div style="font-weight: 600; color: #70AD47; margin-bottom: 10px;">Payment Breakdown by Method:</div>
+                        <div style="font-weight: 600; color: #70AD47; margin-bottom: 10px;">Driver Payment Breakdown by Method:</div>
                         <div class="calc-row"><span>💵 Cash Payment Due (incl. COD)</span><span><strong>$${Math.max(0, cashPay).toFixed(2)}</strong></span></div>
                         <div class="calc-row"><span>✓ Check/ACH Due</span><span><strong>$${Math.max(0, checkPay).toFixed(2)}</strong></span></div>
                         <div class="calc-row"><span>📋 Billing Due</span><span><strong>$${Math.max(0, billingPay).toFixed(2)}</strong></span></div>
