@@ -248,7 +248,7 @@ export default async function DashboardPage() {
                       #{index + 1}
                     </div>
                     <Avatar>
-                      <AvatarFallback>{driver.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                      <AvatarFallback>{driver.name.split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="font-medium">{driver.name}</div>

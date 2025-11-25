@@ -77,7 +77,7 @@ export default async function SettingsPage() {
           Need to reset your password?
         </h3>
         <p className="text-sm text-yellow-800 mb-4">
-          Log out and use the "Forgot password?" link on the login page to reset your password.
+          Log out and use the &quot;Forgot password?&quot; link on the login page to reset your password.
         </p>
       </div>
     </div>
