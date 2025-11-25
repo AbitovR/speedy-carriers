@@ -1,30 +1,48 @@
-import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+'use client'
+
+import { createClient } from '@/lib/supabase/client'
+import { notFound, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Download } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { useEffect, useState } from 'react'
 
-export default async function TripDetailsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const { id } = await params
-  const supabase = await createClient()
+export default function TripDetailsPage() {
+  const params = useParams()
+  const id = params.id as string
+  const [trip, setTrip] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
 
-  // Fetch trip with driver and loads
-  const { data: trip, error } = await supabase
-    .from('trips')
-    .select(`
-      *,
-      driver:drivers(*),
-      loads(*),
-      expenses(*)
-    `)
-    .eq('id', id)
-    .single()
+  useEffect(() => {
+    async function fetchTrip() {
+      const { data, error } = await supabase
+        .from('trips')
+        .select(`
+          *,
+          driver:drivers(*),
+          loads(*),
+          expenses(*)
+        `)
+        .eq('id', id)
+        .single()
 
-  if (error || !trip) {
+      if (error || !data) {
+        notFound()
+      } else {
+        setTrip(data)
+      }
+      setLoading(false)
+    }
+
+    fetchTrip()
+  }, [id])
+
+  if (loading) {
+    return <div className="p-8 text-center">Loading...</div>
+  }
+
+  if (!trip) {
     notFound()
   }
 
