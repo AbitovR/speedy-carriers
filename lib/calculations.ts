@@ -5,6 +5,7 @@ export interface Load {
   price: number
   brokerFee: number
   paymentMethod: string
+  notes?: string
 }
 
 export interface Expenses {
