@@ -728,10 +728,42 @@
     `}
 
     <div class="total">
-        <p style="margin: 0; font-size: 14px; color: #70AD47;">${paymentLabel}</p>
+        <p style="margin: 0; font-size: 14px; color: #70AD47;">TOTAL ${paymentLabel.toUpperCase()}</p>
         <h2 style="margin: 10px 0; font-size: 36px; color: #70AD47;">$${summary.driverPay.toFixed(2)}</h2>
     </div>
 
+    ${settings.driverType === 'owner' ? `
+    <h3>PAYMENT SETTLEMENT</h3>
+    <table>
+        <tr>
+            <td><strong>Total Owner Earnings</strong></td>
+            <td class="amount">$${summary.driverPay.toFixed(2)}</td>
+        </tr>
+        <tr style="color: #dc2626;">
+            <td>Less: Cash/COD Collected by Owner</td>
+            <td>-$${Math.max(0, cashPay).toFixed(2)}</td>
+        </tr>
+        <tr style="border-top: 2px solid #70AD47; background: #f0fdf4;">
+            <td><strong style="color: #70AD47;">NET DUE FROM COMPANY</strong></td>
+            <td class="amount" style="color: #70AD47; font-size: 20px;"><strong>$${Math.max(0, summary.driverPay - cashPay).toFixed(2)}</strong></td>
+        </tr>
+    </table>
+    <h3>COMPANY PAYMENT BREAKDOWN</h3>
+    <table>
+        <tr>
+            <td><strong>✓ Check/ACH Due</strong></td>
+            <td class="amount">$${Math.max(0, checkPay).toFixed(2)}</td>
+        </tr>
+        <tr>
+            <td><strong>📋 Billing Due</strong></td>
+            <td class="amount">$${Math.max(0, billingPay).toFixed(2)}</td>
+        </tr>
+        <tr style="border-top: 2px solid #ddd;">
+            <td><strong>TOTAL DUE FROM COMPANY</strong></td>
+            <td class="amount"><strong>$${Math.max(0, checkPay + billingPay).toFixed(2)}</strong></td>
+        </tr>
+    </table>
+    ` : `
     <h3>PAYMENT BREAKDOWN BY METHOD</h3>
     <table>
         <tr>
@@ -747,6 +779,7 @@
             <td class="amount">$${Math.max(0, billingPay).toFixed(2)}</td>
         </tr>
     </table>
+    `}
 </body>
 </html>
             `;
@@ -925,10 +958,24 @@
                     `}
 
                     <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #ddd;">
+                        ${settings.driverType === 'owner' ? `
+                        <div style="font-weight: 600; color: #70AD47; margin-bottom: 10px;">Payment Settlement:</div>
+                        <div class="calc-row"><span>Total Owner Earnings</span><span><strong>$${summary.driverPay.toFixed(2)}</strong></span></div>
+                        <div class="calc-row" style="color: #dc2626;"><span>Less: Cash/COD Collected by Owner</span><span>-$${Math.max(0, cashPay).toFixed(2)}</span></div>
+                        <div class="calc-row bold highlight" style="border-top: 2px solid #ddd; margin-top: 10px; padding-top: 10px;">
+                            <span style="color: #70AD47; font-weight: bold;">NET DUE FROM COMPANY</span>
+                            <span style="color: #70AD47; font-size: 18px; font-weight: bold;">$${Math.max(0, summary.driverPay - cashPay).toFixed(2)}</span>
+                        </div>
+                        <div style="margin-top: 15px; font-size: 13px; color: #666;">
+                            <div class="calc-row"><span>✓ Check/ACH Due</span><span>$${Math.max(0, checkPay).toFixed(2)}</span></div>
+                            <div class="calc-row"><span>📋 Billing Due</span><span>$${Math.max(0, billingPay).toFixed(2)}</span></div>
+                        </div>
+                        ` : `
                         <div style="font-weight: 600; color: #70AD47; margin-bottom: 10px;">Driver Payment Breakdown by Method:</div>
                         <div class="calc-row"><span>💵 Cash Payment Due (incl. COD)</span><span><strong>$${Math.max(0, cashPay).toFixed(2)}</strong></span></div>
                         <div class="calc-row"><span>✓ Check/ACH Due</span><span><strong>$${Math.max(0, checkPay).toFixed(2)}</strong></span></div>
                         <div class="calc-row"><span>📋 Billing Due</span><span><strong>$${Math.max(0, billingPay).toFixed(2)}</strong></span></div>
+                        `}
                     </div>
 
                     <div class="trip-actions" style="margin-top: 20px;">
