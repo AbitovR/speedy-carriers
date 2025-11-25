@@ -2,6 +2,8 @@
 
 A comprehensive driver payment and trip management system built with Next.js, Supabase, and Tailwind CSS.
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/AbitovR/speedy-carriers)
+
 ## Features
 
 ✅ **Authentication**
