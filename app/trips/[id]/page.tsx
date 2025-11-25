@@ -121,7 +121,9 @@ export default function TripDetailsPage() {
             </p>
           </div>
           <div>
-            <p className="text-gray-600">Company Net</p>
+            <p className="text-gray-600">
+              {driverType === 'owner_operator' ? 'Dispatch Fee (10%)' : 'Company Net'}
+            </p>
             <p className="text-lg font-bold text-gray-900">
               {formatCurrency(trip.company_earnings)}
             </p>
@@ -189,7 +191,7 @@ export default function TripDetailsPage() {
               </div>
 
               <div className="flex justify-between py-2 bg-gray-50 px-3 rounded font-bold">
-                <span>Net to Company</span>
+                <span>Dispatch Fee to Company (10%)</span>
                 <span>{formatCurrency(trip.company_earnings)}</span>
               </div>
 
