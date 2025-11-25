@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, Upload, Edit, FileText } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import TripUploadButton from '@/components/trip-upload-button'
+import DeleteTripButton from '@/components/delete-trip-button'
 
 export default async function DriverProfilePage({
   params,
@@ -184,13 +185,16 @@ export default async function DriverProfilePage({
                       {formatCurrency(trip.driver_earnings)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <Link
-                        href={`/trips/${trip.id}`}
-                        className="text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
-                      >
-                        <FileText className="h-4 w-4" />
-                        View
-                      </Link>
+                      <div className="flex items-center gap-4">
+                        <Link
+                          href={`/trips/${trip.id}`}
+                          className="text-blue-600 hover:text-blue-800 inline-flex items-center gap-1"
+                        >
+                          <FileText className="h-4 w-4" />
+                          View
+                        </Link>
+                        <DeleteTripButton tripId={trip.id} tripName={trip.trip_name} />
+                      </div>
                     </td>
                   </tr>
                 ))}
