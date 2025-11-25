@@ -163,7 +163,13 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
       // Insert loads
       const loadsToInsert = loads.map((load) => ({
         trip_id: tripData.id,
-        ...load,
+        load_id: load.loadId,
+        customer: load.customer,
+        vehicle: load.vehicle,
+        price: load.price,
+        broker_fee: load.brokerFee,
+        payment_method: load.paymentMethod,
+        notes: load.notes || null,
       }))
 
       const { error: loadsError } = await supabase.from('loads').insert(loadsToInsert)
