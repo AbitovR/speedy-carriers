@@ -88,12 +88,40 @@
     background: white !important;
   }
 
+  /* Remove height and overflow restrictions for print */
+  html,
+  body,
+  #__next,
+  main,
+  main > div,
+  div[class*="h-screen"],
+  div[class*="overflow-hidden"],
+  div[class*="overflow-y-auto"] {
+    height: auto !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  /* Override flex layout for print */
+  .flex.h-screen {
+    display: block !important;
+    height: auto !important;
+  }
+
   /* Make main content take full width */
   main {
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
     padding: 1rem !important;
+  }
+
+  /* Remove shadows and backgrounds for cleaner print */
+  .shadow,
+  .shadow-lg,
+  .shadow-xl,
+  .rounded-lg {
+    box-shadow: none !important;
   }
 
   /* Ensure proper page breaks */
@@ -106,6 +134,11 @@
   }
 
   .page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+
+  /* Allow content sections to break across pages if needed */
+  .space-y-6 > * {
     page-break-inside: avoid;
   }
 }
