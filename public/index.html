@@ -547,13 +547,14 @@
             const paymentLabel = settings.driverType === 'owner' ? 'OWNER OPERATOR PAY' : 'DRIVER PAY';
             const percentage = settings.driverType === 'owner' ? 0.90 : 0.32;
 
-            // For owner operators: split total pay proportionally by original gross amounts
+            // For owner operators: use actual gross amounts collected
             // For drivers: calculate directly from gross
             let cashPay, checkPay, billingPay;
             if (settings.driverType === 'owner') {
-                cashPay = (summary.cashGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
-                checkPay = (summary.checkGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
-                billingPay = (summary.billingGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
+                // Owner collected the actual cash/COD gross amount
+                cashPay = summary.cashGrossBeforeDeductions;
+                checkPay = summary.checkGrossBeforeDeductions;
+                billingPay = summary.billingGrossBeforeDeductions;
             } else {
                 cashPay = summary.cashGrossBeforeDeductions * percentage;
                 checkPay = summary.checkGrossBeforeDeductions * percentage;
@@ -878,14 +879,14 @@
 
             const tripsList = document.getElementById('tripsList');
             const percentage = settings.driverType === 'owner' ? 0.90 : 0.32;
-            // For owner operators: split total pay proportionally by original gross amounts
+            // For owner operators: use actual gross amounts collected
             // For drivers: calculate directly from gross
             let cashPay, checkPay, billingPay;
             if (settings.driverType === 'owner') {
-                // Owner pay is split proportionally based on original gross amounts
-                cashPay = (summary.cashGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
-                checkPay = (summary.checkGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
-                billingPay = (summary.billingGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
+                // Owner collected the actual cash/COD gross amount
+                cashPay = summary.cashGrossBeforeDeductions;
+                checkPay = summary.checkGrossBeforeDeductions;
+                billingPay = summary.billingGrossBeforeDeductions;
             } else {
                 cashPay = summary.cashGrossBeforeDeductions * percentage;
                 checkPay = summary.checkGrossBeforeDeductions * percentage;
