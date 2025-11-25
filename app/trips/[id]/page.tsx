@@ -47,7 +47,15 @@ export default function TripDetailsPage() {
   }
 
   const driverType = trip.driver.driver_type
-  const percentage = driverType === 'owner_operator' ? 90 : 32
+  const percentage = driverType === 'owner_operator' ? 100 : 32
+
+  // Normalize payment method (cash/cod -> cash, check/ach -> check, else -> billing)
+  const normalizePaymentMethod = (method: string) => {
+    const normalized = method?.toLowerCase().trim() || ''
+    if (normalized === 'cod' || normalized === 'cash') return 'cash'
+    if (normalized === 'check' || normalized === 'ach') return 'check'
+    return 'billing'
+  }
 
   // Calculate breakdown by payment method
   let cashGross = 0
@@ -56,7 +64,7 @@ export default function TripDetailsPage() {
 
   trip.loads.forEach((load: any) => {
     const gross = load.price - load.broker_fee
-    const method = load.payment_method.toLowerCase()
+    const method = normalizePaymentMethod(load.payment_method)
 
     if (method === 'cash') {
       cashGross += gross
@@ -172,7 +180,7 @@ export default function TripDetailsPage() {
 
               <div className="pt-3">
                 <p className="font-semibold text-gray-700 mb-2">
-                  Owner Operator Payment ({percentage}% of Net Gross):
+                  Owner Operator Payment (100% of Net Gross):
                 </p>
                 <div className="flex justify-between py-3 bg-yellow-50 px-3 rounded font-bold text-green-600">
                   <span>OWNER OPERATOR EARNINGS</span>
