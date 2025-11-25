@@ -547,16 +547,18 @@
             const paymentLabel = settings.driverType === 'owner' ? 'OWNER OPERATOR PAY' : 'DRIVER PAY';
             const percentage = settings.driverType === 'owner' ? 0.90 : 0.32;
 
-            // For owner operators, use AFTER expenses; for drivers, use BEFORE expenses
-            const cashPay = settings.driverType === 'owner'
-                ? summary.cashGrossAfterDeductions * percentage
-                : summary.cashGrossBeforeDeductions * percentage;
-            const checkPay = settings.driverType === 'owner'
-                ? summary.checkGrossAfterDeductions * percentage
-                : summary.checkGrossBeforeDeductions * percentage;
-            const billingPay = settings.driverType === 'owner'
-                ? summary.billingGrossAfterDeductions * percentage
-                : summary.billingGrossBeforeDeductions * percentage;
+            // For owner operators: split total pay proportionally by original gross amounts
+            // For drivers: calculate directly from gross
+            let cashPay, checkPay, billingPay;
+            if (settings.driverType === 'owner') {
+                cashPay = (summary.cashGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
+                checkPay = (summary.checkGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
+                billingPay = (summary.billingGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
+            } else {
+                cashPay = summary.cashGrossBeforeDeductions * percentage;
+                checkPay = summary.checkGrossBeforeDeductions * percentage;
+                billingPay = summary.billingGrossBeforeDeductions * percentage;
+            }
 
             const htmlContent = `
 <!DOCTYPE html>
@@ -640,27 +642,35 @@
     </table>
 
     ${settings.driverType === 'owner' ? `
-    <h3>GROSS BREAKDOWN BY PAYMENT METHOD (AFTER EXPENSES)</h3>
+    <h3>GROSS BREAKDOWN BY PAYMENT METHOD</h3>
     <table>
         <tr>
             <td>Cash (including COD)</td>
-            <td>$${summary.cashGrossAfterDeductions.toFixed(2)}</td>
+            <td>$${summary.cashGrossBeforeDeductions.toFixed(2)}</td>
         </tr>
         <tr>
             <td>Check/ACH</td>
-            <td>$${summary.checkGrossAfterDeductions.toFixed(2)}</td>
+            <td>$${summary.checkGrossBeforeDeductions.toFixed(2)}</td>
         </tr>
         <tr style="border-bottom: 2px solid #ddd;">
             <td>Billing/Credit</td>
-            <td>$${summary.billingGrossAfterDeductions.toFixed(2)}</td>
+            <td>$${summary.billingGrossBeforeDeductions.toFixed(2)}</td>
         </tr>
         <tr>
-            <td><strong>NET GROSS (After Expenses)</strong></td>
+            <td><strong>TOTAL GROSS</strong></td>
+            <td class="amount">$${summary.totalGrossBeforeDeductions.toFixed(2)}</td>
+        </tr>
+    </table>
+
+    <h3>NET GROSS (After Expenses)</h3>
+    <table>
+        <tr style="border-bottom: 2px solid #ddd;">
+            <td><strong>Total Net Gross</strong></td>
             <td class="amount">$${summary.totalGrossAfterDeductions.toFixed(2)}</td>
         </tr>
     </table>
 
-    <h3>OWNER OPERATOR EARNINGS (${percent} of Net Gross After Expenses)</h3>
+    <h3>OWNER OPERATOR EARNINGS (${percent} of Net Gross, split by payment method proportionally)</h3>
     <table>
         <tr style="border-bottom: 2px solid #ddd;">
             <td><strong>Total Owner Operator Earnings</strong></td>
@@ -835,16 +845,19 @@
 
             const tripsList = document.getElementById('tripsList');
             const percentage = settings.driverType === 'owner' ? 0.90 : 0.32;
-            // For owner operators, use AFTER expenses; for drivers, use BEFORE expenses
-            const cashPay = settings.driverType === 'owner'
-                ? summary.cashGrossAfterDeductions * percentage
-                : summary.cashGrossBeforeDeductions * percentage;
-            const checkPay = settings.driverType === 'owner'
-                ? summary.checkGrossAfterDeductions * percentage
-                : summary.checkGrossBeforeDeductions * percentage;
-            const billingPay = settings.driverType === 'owner'
-                ? summary.billingGrossAfterDeductions * percentage
-                : summary.billingGrossBeforeDeductions * percentage;
+            // For owner operators: split total pay proportionally by original gross amounts
+            // For drivers: calculate directly from gross
+            let cashPay, checkPay, billingPay;
+            if (settings.driverType === 'owner') {
+                // Owner pay is split proportionally based on original gross amounts
+                cashPay = (summary.cashGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
+                checkPay = (summary.checkGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
+                billingPay = (summary.billingGrossBeforeDeductions / summary.totalGrossBeforeDeductions) * summary.driverPay;
+            } else {
+                cashPay = summary.cashGrossBeforeDeductions * percentage;
+                checkPay = summary.checkGrossBeforeDeductions * percentage;
+                billingPay = summary.billingGrossBeforeDeductions * percentage;
+            }
 
             tripsList.innerHTML = `
                 <div style="margin-bottom: 20px;">
