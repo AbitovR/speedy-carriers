@@ -71,7 +71,7 @@ export default function TripDetailsPage() {
     <div className="space-y-6">
       <Link
         href={`/drivers/${trip.driver_id}`}
-        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
+        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 print:hidden"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Driver

@@ -24,7 +24,7 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-gray-900 text-white w-64">
+    <aside className="flex h-screen flex-col bg-gray-900 text-white w-64">
       {/* Logo */}
       <div className="flex h-16 items-center justify-center border-b border-gray-800">
         <h1 className="text-xl font-bold">Speedy Carriers</h1>
@@ -63,6 +63,6 @@ export default function Sidebar() {
           Sign Out
         </button>
       </div>
-    </div>
+    </aside>
   )
 }
