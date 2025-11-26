@@ -154,7 +154,7 @@ export default function EnhancedDashboard({ data }: { data: DashboardData }) {
             Analytics Dashboard
           </h1>
           <p className="text-muted-foreground">
-            Track your company's performance and key metrics
+            Track your company&apos;s performance and key metrics
           </p>
         </div>
         <div className="flex items-center gap-2 bg-card border border-border rounded-lg p-1">
