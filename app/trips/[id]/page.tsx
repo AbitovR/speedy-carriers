@@ -153,36 +153,37 @@ export default function TripDetailsPage() {
             <>
               <div className="pt-3">
                 <p className="font-semibold text-foreground mb-2">
-                  Expenses (Deducted from Gross):
+                  Local Expenses:
                 </p>
-                <div className="flex justify-between py-1">
-                  <span>- Dispatch Fee (10%)</span>
-                  <span>
-                    -{formatCurrency((trip.total_invoice - trip.total_broker_fees) * 0.1)}
-                  </span>
-                </div>
                 {trip.expenses?.map((expense: any) => (
                   <div key={expense.id} className="flex justify-between py-1">
                     <span>- {expense.category.replace('_', ' ')}</span>
                     <span>-{formatCurrency(expense.amount)}</span>
                   </div>
                 ))}
-                <div className="flex justify-between py-2 border-t font-bold">
-                  <span>Total Expenses</span>
-                  <span>-{formatCurrency(trip.expenses_total)}</span>
+                <div className="flex justify-between py-2 bg-blue-50 dark:bg-blue-900/30 px-3 rounded font-bold">
+                  <span>After Local Expenses</span>
+                  <span>
+                    {formatCurrency(trip.total_invoice - trip.total_broker_fees - (trip.expenses_total - trip.company_earnings))}
+                  </span>
                 </div>
-              </div>
-
-              <div className="flex justify-between py-2 bg-green-100 dark:bg-green-900/30 px-3 rounded font-bold text-green-800 dark:text-green-400">
-                <span>Net Gross (After Expenses)</span>
-                <span>
-                  {formatCurrency(trip.total_invoice - trip.total_broker_fees - trip.expenses_total)}
-                </span>
               </div>
 
               <div className="pt-3">
                 <p className="font-semibold text-foreground mb-2">
-                  Owner Operator Payment (100% of Net Gross):
+                  Deductions:
+                </p>
+                <div className="flex justify-between py-1">
+                  <span>- Dispatch Fee (10% of Total Gross)</span>
+                  <span>
+                    -{formatCurrency(trip.company_earnings)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-3">
+                <p className="font-semibold text-foreground mb-2">
+                  Owner Operator Payment:
                 </p>
                 <div className="flex justify-between py-3 bg-yellow-50 dark:bg-yellow-900/20 px-3 rounded font-bold text-green-600">
                   <span>OWNER OPERATOR EARNINGS</span>
