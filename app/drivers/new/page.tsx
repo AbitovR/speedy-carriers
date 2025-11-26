@@ -61,14 +61,14 @@ export default function NewDriverPage() {
     <div className="max-w-2xl">
       <Link
         href="/drivers"
-        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
+        className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Drivers
       </Link>
 
-      <div className="bg-white rounded-lg shadow p-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Add New Driver</h1>
+      <div className="bg-card rounded-lg shadow p-8">
+        <h1 className="text-3xl font-bold text-foreground mb-6">Add New Driver</h1>
 
         {message && (
           <div
@@ -84,7 +84,7 @@ export default function NewDriverPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
               Full Name *
             </label>
             <input
@@ -93,13 +93,13 @@ export default function NewDriverPage() {
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               placeholder="John Doe"
             />
           </div>
 
           <div>
-            <label htmlFor="driver_type" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="driver_type" className="block text-sm font-medium text-foreground mb-2">
               Driver Type *
             </label>
             <select
@@ -109,20 +109,20 @@ export default function NewDriverPage() {
               onChange={(e) =>
                 setFormData({ ...formData, driver_type: e.target.value as 'company_driver' | 'owner_operator' })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
             >
               <option value="company_driver">Company Driver (32%)</option>
-              <option value="owner_operator">Owner Operator (90%)</option>
+              <option value="owner_operator">Owner Operator (100% after 10% dispatch fee)</option>
             </select>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-muted-foreground">
               {formData.driver_type === 'company_driver'
                 ? 'Company driver receives 32% of gross revenue before expenses'
-                : 'Owner operator receives 90% of net revenue after expenses'}
+                : 'Owner operator receives 100% of net revenue after 10% dispatch fee and expenses'}
             </p>
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
               Email
             </label>
             <input
@@ -130,13 +130,13 @@ export default function NewDriverPage() {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               placeholder="driver@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-2">
               Phone
             </label>
             <input
@@ -144,13 +144,13 @@ export default function NewDriverPage() {
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               placeholder="(555) 123-4567"
             />
           </div>
 
           <div>
-            <label htmlFor="license_number" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="license_number" className="block text-sm font-medium text-foreground mb-2">
               License Number
             </label>
             <input
@@ -158,13 +158,13 @@ export default function NewDriverPage() {
               type="text"
               value={formData.license_number}
               onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               placeholder="CDL-123456"
             />
           </div>
 
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="status" className="block text-sm font-medium text-foreground mb-2">
               Status *
             </label>
             <select
@@ -172,7 +172,7 @@ export default function NewDriverPage() {
               required
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -183,13 +183,13 @@ export default function NewDriverPage() {
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Adding...' : 'Add Driver'}
             </button>
             <Link
               href="/drivers"
-              className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors text-center"
+              className="flex-1 bg-secondary text-foreground py-2 px-4 rounded-md hover:bg-secondary/80 transition-colors text-center"
             >
               Cancel
             </Link>

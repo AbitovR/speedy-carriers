@@ -84,27 +84,27 @@ export default function EditDriverPage() {
   }
 
   if (loading) {
-    return <div className="p-8 text-center">Loading...</div>
+    return <div className="p-8 text-center text-muted-foreground">Loading...</div>
   }
 
   return (
     <div className="space-y-6">
       <Link
         href={`/drivers/${id}`}
-        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
+        className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Driver Profile
       </Link>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Driver</h1>
+      <div className="bg-card rounded-lg shadow p-6">
+        <h1 className="text-2xl font-bold text-foreground mb-6">Edit Driver</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
                 Name *
               </label>
               <input
@@ -113,13 +113,13 @@ export default function EditDriverPage() {
                 required
                 value={driver.name}
                 onChange={(e) => setDriver({ ...driver, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               />
             </div>
 
             {/* Driver Type */}
             <div>
-              <label htmlFor="driver_type" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="driver_type" className="block text-sm font-medium text-foreground mb-2">
                 Driver Type *
               </label>
               <select
@@ -127,7 +127,7 @@ export default function EditDriverPage() {
                 required
                 value={driver.driver_type}
                 onChange={(e) => setDriver({ ...driver, driver_type: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               >
                 <option value="company_driver">Company Driver (32%)</option>
                 <option value="owner_operator">Owner Operator (100% after 10% dispatch fee)</option>
@@ -136,7 +136,7 @@ export default function EditDriverPage() {
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
                 Email
               </label>
               <input
@@ -144,13 +144,13 @@ export default function EditDriverPage() {
                 id="email"
                 value={driver.email}
                 onChange={(e) => setDriver({ ...driver, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               />
             </div>
 
             {/* Phone */}
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-2">
                 Phone
               </label>
               <input
@@ -158,13 +158,13 @@ export default function EditDriverPage() {
                 id="phone"
                 value={driver.phone}
                 onChange={(e) => setDriver({ ...driver, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               />
             </div>
 
             {/* License Number */}
             <div>
-              <label htmlFor="license_number" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="license_number" className="block text-sm font-medium text-foreground mb-2">
                 License Number
               </label>
               <input
@@ -172,13 +172,13 @@ export default function EditDriverPage() {
                 id="license_number"
                 value={driver.license_number}
                 onChange={(e) => setDriver({ ...driver, license_number: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               />
             </div>
 
             {/* Status */}
             <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="status" className="block text-sm font-medium text-foreground mb-2">
                 Status *
               </label>
               <select
@@ -186,7 +186,7 @@ export default function EditDriverPage() {
                 required
                 value={driver.status}
                 onChange={(e) => setDriver({ ...driver, status: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -198,14 +198,14 @@ export default function EditDriverPage() {
           <div className="flex gap-3 justify-end pt-6 border-t">
             <Link
               href={`/drivers/${id}`}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-6 py-2 border text-foreground rounded-lg hover:bg-accent transition-colors"
             >
               Cancel
             </Link>
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
