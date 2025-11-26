@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Home, Users, FileText, Settings, LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { ThemeToggle } from './theme-toggle'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -53,8 +54,9 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Sign Out Button */}
-      <div className="border-t border-gray-800 p-4">
+      {/* Theme Toggle & Sign Out */}
+      <div className="border-t border-gray-800 p-4 space-y-1">
+        <ThemeToggle />
         <button
           onClick={handleSignOut}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
