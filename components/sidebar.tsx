@@ -28,26 +28,26 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Overlay for mobile */}
+      {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={close}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-50 flex h-screen flex-col bg-gray-900 text-white w-64 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        className={`fixed inset-y-0 left-0 z-50 flex h-screen flex-col bg-gray-900 text-white w-64 transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Logo with close button on mobile */}
+        {/* Logo with close button */}
         <div className="flex h-16 items-center justify-between px-4 border-b border-gray-800">
           <h1 className="text-xl font-bold">Speedy Carriers</h1>
           <button
             onClick={close}
-            className="md:hidden text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
