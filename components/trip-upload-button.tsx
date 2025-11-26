@@ -150,7 +150,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
             driver_earnings: summary.driverPay,
             company_earnings:
               driverType === 'owner_operator'
-                ? summary.totalGrossAfterDeductions - summary.driverPay
+                ? summary.dispatchFeeAmount  // Just the 10% dispatch fee for owner operators
                 : summary.totalGrossBeforeDeductions - summary.driverPay - summary.totalExpenses,
             expenses_total: summary.totalExpenses,
           },
