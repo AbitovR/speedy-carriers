@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Users, FileText, Settings, LogOut } from 'lucide-react'
+import { Home, Users, FileText, Settings, LogOut, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { ThemeToggle } from './theme-toggle'
+import { useSidebar } from './sidebar-provider'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -16,6 +17,7 @@ const navigation = [
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const { isOpen, close } = useSidebar()
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -25,11 +27,31 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen flex-col bg-gray-900 text-white w-64">
-      {/* Logo */}
-      <div className="flex h-16 items-center justify-center border-b border-gray-800">
-        <h1 className="text-xl font-bold">Speedy Carriers</h1>
-      </div>
+    <>
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={close}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed md:static inset-y-0 left-0 z-50 flex h-screen flex-col bg-gray-900 text-white w-64 transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
+        {/* Logo with close button on mobile */}
+        <div className="flex h-16 items-center justify-between px-4 border-b border-gray-800">
+          <h1 className="text-xl font-bold">Speedy Carriers</h1>
+          <button
+            onClick={close}
+            className="md:hidden text-gray-400 hover:text-white"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">
@@ -65,6 +87,7 @@ export default function Sidebar() {
           Sign Out
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }
