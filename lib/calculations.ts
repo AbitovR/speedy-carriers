@@ -76,10 +76,7 @@ export function calculateTripSummary(
     }
   })
 
-  // Calculate 10% dispatch fee
-  const dispatchFeeAmount = totalGrossBeforeDeductions * DISPATCH_FEE
-
-  // Total expenses (dispatch fee + other expenses)
+  // Other expenses (local fees)
   const otherExpenses =
     expenses.parking +
     expenses.eldLogbook +
@@ -87,6 +84,15 @@ export function calculateTripSummary(
     expenses.fuel +
     expenses.ifta +
     expenses.localTowing
+
+  // For owner operators: subtract expenses FIRST, then calculate 10% dispatch fee on remaining
+  // For company drivers: calculate 10% on total gross as before
+  const dispatchFeeAmount =
+    driverType === 'owner_operator'
+      ? (totalGrossBeforeDeductions - otherExpenses) * DISPATCH_FEE
+      : totalGrossBeforeDeductions * DISPATCH_FEE
+
+  // Total expenses (dispatch fee + other expenses)
   const totalExpenses = dispatchFeeAmount + otherExpenses
 
   // Apply deductions proportionally to each payment method
