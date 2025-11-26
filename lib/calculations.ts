@@ -117,11 +117,11 @@ export function calculateTripSummary(
 
   // Driver/Owner percentage
   // For regular drivers (32%): calculated from gross BEFORE expenses
-  // For owner operators (90%): get 90% of remaining after 10% dispatch fee and other expenses
-  const percentage = driverType === 'owner_operator' ? 0.9 : 0.32
+  // For owner operators (100%): get 100% of remaining after 10% dispatch fee and other expenses
+  const percentage = driverType === 'owner_operator' ? 1.0 : 0.32
   const driverPay =
     driverType === 'owner_operator'
-      ? totalGrossAfterDeductions * 0.9 // Owner operators get 90% of what remains
+      ? totalGrossAfterDeductions // Owner operators get 100% of what remains after company 10% and expenses
       : totalGrossBeforeDeductions * percentage
 
   return {

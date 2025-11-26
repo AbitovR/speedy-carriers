@@ -130,7 +130,7 @@ export default function EditDriverPage() {
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
               >
                 <option value="company_driver">Company Driver (32%)</option>
-                <option value="owner_operator">Owner Operator (90% after 10% dispatch fee)</option>
+                <option value="owner_operator">Owner Operator (100% after 10% dispatch fee)</option>
               </select>
             </div>
 

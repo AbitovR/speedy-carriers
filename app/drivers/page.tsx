@@ -55,7 +55,7 @@ export default async function DriversPage() {
               <div className="space-y-2 text-sm">
                 <p className="text-muted-foreground">
                   <span className="font-medium">Type:</span>{' '}
-                  {driver.driver_type === 'company_driver' ? 'Company Driver (32%)' : 'Owner Operator (90% after 10% dispatch fee)'}
+                  {driver.driver_type === 'company_driver' ? 'Company Driver (32%)' : 'Owner Operator (100% after 10% dispatch fee)'}
                 </p>
 
                 {driver.email && (
