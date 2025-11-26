@@ -17,14 +17,12 @@ const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undef
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>('light')
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     const storedTheme = localStorage.getItem('theme') as Theme | null
     if (storedTheme) {
       setTheme(storedTheme)
-      document.documentElement.classList.toggle('dark', storedTheme === 'dark')
+      document.documentElement.classList.add(storedTheme)
     }
   }, [])
 
@@ -33,12 +31,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     setTheme: (newTheme: Theme) => {
       setTheme(newTheme)
       localStorage.setItem('theme', newTheme)
-      document.documentElement.classList.toggle('dark', newTheme === 'dark')
+      document.documentElement.classList.remove('light', 'dark')
+      document.documentElement.classList.add(newTheme)
     },
-  }
-
-  if (!mounted) {
-    return <>{children}</>
   }
 
   return (
