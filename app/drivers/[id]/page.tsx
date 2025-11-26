@@ -65,7 +65,7 @@ export default async function DriverProfilePage({
             <p className="text-muted-foreground mt-1">
               {driver.driver_type === 'company_driver'
                 ? 'Company Driver (32%)'
-                : 'Owner Operator (100% after 10% dispatch fee)'}
+                : 'Owner Operator (90% after 10% dispatch fee)'}
             </p>
           </div>
           <div className="flex gap-2">

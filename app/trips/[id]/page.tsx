@@ -182,7 +182,7 @@ export default function TripDetailsPage() {
 
               <div className="pt-3">
                 <p className="font-semibold text-foreground mb-2">
-                  Owner Operator Payment (100% of Net Gross):
+                  Owner Operator Payment (90% of Net Gross):
                 </p>
                 <div className="flex justify-between py-3 bg-yellow-50 dark:bg-yellow-900/20 px-3 rounded font-bold text-green-600">
                   <span>OWNER OPERATOR EARNINGS</span>

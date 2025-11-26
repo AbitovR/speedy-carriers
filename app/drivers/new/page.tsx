@@ -112,12 +112,12 @@ export default function NewDriverPage() {
               className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
             >
               <option value="company_driver">Company Driver (32%)</option>
-              <option value="owner_operator">Owner Operator (100% after 10% dispatch fee)</option>
+              <option value="owner_operator">Owner Operator (90% after 10% dispatch fee)</option>
             </select>
             <p className="mt-2 text-sm text-muted-foreground">
               {formData.driver_type === 'company_driver'
                 ? 'Company driver receives 32% of gross revenue before expenses'
-                : 'Owner operator receives 100% of net revenue after 10% dispatch fee and expenses'}
+                : 'Owner operator receives 90% of net revenue after 10% dispatch fee and expenses'}
             </p>
           </div>
 

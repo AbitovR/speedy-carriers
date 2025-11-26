@@ -85,12 +85,8 @@ export function calculateTripSummary(
     expenses.ifta +
     expenses.localTowing
 
-  // For owner operators: subtract expenses FIRST, then calculate 10% dispatch fee on remaining
-  // For company drivers: calculate 10% on total gross as before
-  const dispatchFeeAmount =
-    driverType === 'owner_operator'
-      ? (totalGrossBeforeDeductions - otherExpenses) * DISPATCH_FEE
-      : totalGrossBeforeDeductions * DISPATCH_FEE
+  // Dispatch fee: Always 10% of total gross for both driver types
+  const dispatchFeeAmount = totalGrossBeforeDeductions * DISPATCH_FEE
 
   // Total expenses (dispatch fee + other expenses)
   const totalExpenses = dispatchFeeAmount + otherExpenses
@@ -121,11 +117,11 @@ export function calculateTripSummary(
 
   // Driver/Owner percentage
   // For regular drivers (32%): calculated from gross BEFORE expenses
-  // For owner operators (100%): get ALL remaining after 10% dispatch fee and other expenses
-  const percentage = driverType === 'owner_operator' ? 1.0 : 0.32
+  // For owner operators (90%): get 90% of remaining after 10% dispatch fee and other expenses
+  const percentage = driverType === 'owner_operator' ? 0.9 : 0.32
   const driverPay =
     driverType === 'owner_operator'
-      ? totalGrossAfterDeductions // Owner operators get 100% of what remains
+      ? totalGrossAfterDeductions * 0.9 // Owner operators get 90% of what remains
       : totalGrossBeforeDeductions * percentage
 
   return {
