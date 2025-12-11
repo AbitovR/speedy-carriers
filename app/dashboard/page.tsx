@@ -1,19 +1,37 @@
 import { createClient } from '@/lib/supabase/server'
 import EnhancedDashboard from '@/components/enhanced-dashboard'
+import { writeFile, appendFile } from 'fs/promises'
+import { join } from 'path'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
 
   // Fetch dashboard data
-  const { data: drivers } = await supabase
+  const { data: drivers, error: driversError } = await supabase
     .from('drivers')
     .select('*')
     .eq('status', 'active')
 
-  const { data: allTrips } = await supabase
+  // #region agent log
+  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/dashboard/page.tsx:12',message:'Dashboard drivers query result',data:{hasError:!!driversError,errorMessage:driversError?.message,driversIsNull:!drivers,driversLength:drivers?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})+'\n');}catch(e){}
+  // #endregion
+
+  if (driversError) {
+    console.error('Error fetching drivers:', driversError)
+  }
+
+  const { data: allTrips, error: tripsError } = await supabase
     .from('trips')
     .select('*')
     .order('trip_date', { ascending: false })
+
+  // #region agent log
+  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/dashboard/page.tsx:20',message:'Dashboard trips query result',data:{hasError:!!tripsError,errorMessage:tripsError?.message,tripsIsNull:!allTrips,tripsLength:allTrips?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})+'\n');}catch(e){}
+  // #endregion
+
+  if (tripsError) {
+    console.error('Error fetching trips:', tripsError)
+  }
 
   // Calculate stats
   const totalDrivers = drivers?.length || 0
@@ -50,8 +68,14 @@ export default async function DashboardPage() {
   }
 
   // Calculate revenue breakdown by driver type
+  // #region agent log
+  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/dashboard/page.tsx:60',message:'Before filtering trips by driver type',data:{driversIsNull:!drivers,driversLength:drivers?.length,allTripsIsNull:!allTrips,allTripsLength:allTrips?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');}catch(e){}
+  // #endregion
   const companyDriverRevenue = allTrips?.filter(trip => {
     const driver = drivers?.find(d => d.id === trip.driver_id)
+    // #region agent log
+    appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/dashboard/page.tsx:64',message:'Driver lookup in filter',data:{tripId:trip?.id,driverId:trip?.driver_id,driverFound:!!driver,driverType:driver?.driver_type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n').catch(()=>{});
+    // #endregion
     return driver?.driver_type === 'company_driver'
   }).reduce((sum, trip) => sum + (trip.total_invoice || 0), 0) || 0
 

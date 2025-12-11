@@ -21,6 +21,7 @@ export interface TripSummary {
   totalPrice: number
   totalBrokerFee: number
   totalGrossBeforeDeductions: number
+  totalGrossAfterTowing: number
   dispatchFeeAmount: number
   otherExpenses: number
   totalExpenses: number
@@ -76,22 +77,26 @@ export function calculateTripSummary(
     }
   })
 
-  // Other expenses (local fees)
+  // Step 1: Deduct local towing fee FIRST (if it exists)
+  const localTowingFee = expenses.localTowing || 0
+  const totalGrossAfterTowing = totalGrossBeforeDeductions - localTowingFee
+
+  // Step 2: Calculate dispatch fee from gross AFTER towing
+  // Dispatch fee: Always 10% of gross after towing for both driver types
+  const dispatchFeeAmount = totalGrossAfterTowing * DISPATCH_FEE
+
+  // Step 3: Other expenses (excluding local towing, as it's already deducted)
   const otherExpenses =
     expenses.parking +
     expenses.eldLogbook +
     expenses.insurance +
     expenses.fuel +
-    expenses.ifta +
-    expenses.localTowing
+    expenses.ifta
 
-  // Dispatch fee: Always 10% of total gross for both driver types
-  const dispatchFeeAmount = totalGrossBeforeDeductions * DISPATCH_FEE
+  // Step 4: Total expenses (dispatch fee + other expenses + local towing)
+  const totalExpenses = dispatchFeeAmount + otherExpenses + localTowingFee
 
-  // Total expenses (dispatch fee + other expenses)
-  const totalExpenses = dispatchFeeAmount + otherExpenses
-
-  // Apply deductions proportionally to each payment method
+  // Apply local towing fee proportionally to each payment method
   const cashShare =
     totalGrossBeforeDeductions > 0
       ? cashGrossBeforeDeductions / totalGrossBeforeDeductions
@@ -105,29 +110,50 @@ export function calculateTripSummary(
       ? billingGrossBeforeDeductions / totalGrossBeforeDeductions
       : 0
 
-  const cashExpenses = totalExpenses * cashShare
-  const checkExpenses = totalExpenses * checkShare
-  const billingExpenses = totalExpenses * billingShare
+  const cashTowingFee = localTowingFee * cashShare
+  const checkTowingFee = localTowingFee * checkShare
+  const billingTowingFee = localTowingFee * billingShare
 
-  // Gross AFTER deductions
+  // Calculate gross after towing for each payment method
+  const cashGrossAfterTowing = cashGrossBeforeDeductions - cashTowingFee
+  const checkGrossAfterTowing = checkGrossBeforeDeductions - checkTowingFee
+  const billingGrossAfterTowing = billingGrossBeforeDeductions - billingTowingFee
+
+  // Calculate dispatch fee proportionally from gross after towing
+  const cashDispatchFee = cashGrossAfterTowing * DISPATCH_FEE
+  const checkDispatchFee = checkGrossAfterTowing * DISPATCH_FEE
+  const billingDispatchFee = billingGrossAfterTowing * DISPATCH_FEE
+
+  // Calculate other expenses proportionally
+  const cashOtherExpenses = otherExpenses * cashShare
+  const checkOtherExpenses = otherExpenses * checkShare
+  const billingOtherExpenses = otherExpenses * billingShare
+
+  // Total expenses per payment method
+  const cashExpenses = cashTowingFee + cashDispatchFee + cashOtherExpenses
+  const checkExpenses = checkTowingFee + checkDispatchFee + checkOtherExpenses
+  const billingExpenses = billingTowingFee + billingDispatchFee + billingOtherExpenses
+
+  // Gross AFTER all deductions
   const totalGrossAfterDeductions = totalGrossBeforeDeductions - totalExpenses
   const cashGrossAfterDeductions = cashGrossBeforeDeductions - cashExpenses
   const checkGrossAfterDeductions = checkGrossBeforeDeductions - checkExpenses
   const billingGrossAfterDeductions = billingGrossBeforeDeductions - billingExpenses
 
   // Driver/Owner percentage
-  // For regular drivers (32%): calculated from gross BEFORE expenses
+  // For regular drivers (32%): calculated from gross AFTER towing (but before dispatch fee and other expenses)
   // For owner operators (100%): get 100% of remaining after 10% dispatch fee and other expenses
   const percentage = driverType === 'owner_operator' ? 1.0 : 0.32
   const driverPay =
     driverType === 'owner_operator'
-      ? totalGrossAfterDeductions // Owner operators get 100% of what remains after company 10% and expenses
-      : totalGrossBeforeDeductions * percentage
+      ? totalGrossAfterDeductions // Owner operators get 100% of what remains after towing, dispatch fee, and other expenses
+      : totalGrossAfterTowing * percentage // Company drivers get 32% of gross after towing
 
   return {
     totalPrice,
     totalBrokerFee,
     totalGrossBeforeDeductions,
+    totalGrossAfterTowing, // Add this for company earnings calculation
     dispatchFeeAmount,
     otherExpenses,
     totalExpenses,

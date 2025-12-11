@@ -151,7 +151,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
             company_earnings:
               driverType === 'owner_operator'
                 ? summary.dispatchFeeAmount  // Owner operators: company gets only the 10% dispatch fee
-                : summary.totalGrossBeforeDeductions - summary.driverPay - summary.totalExpenses,
+                : summary.totalGrossAfterTowing - summary.driverPay - summary.dispatchFeeAmount - summary.otherExpenses, // Company drivers: gross after towing minus driver pay, dispatch fee, and other expenses
             expenses_total: summary.totalExpenses,
           },
         ])

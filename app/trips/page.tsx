@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { FileText, Calendar, User, DollarSign } from 'lucide-react'
+import { appendFile } from 'fs/promises'
+import { join } from 'path'
 
 export default async function TripsPage() {
   const supabase = await createClient()
@@ -30,14 +32,21 @@ export default async function TripsPage() {
     `)
     .order('trip_date', { ascending: false })
 
+  // #region agent log
+  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:35',message:'Trips query result',data:{hasError:!!error,errorMessage:error?.message,tripsIsNull:!trips,tripsLength:trips?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n');}catch(e){}
+  // #endregion
+
   if (error) {
     console.error('Error fetching trips:', error)
   }
 
-  const totalTrips = trips?.length || 0
-  const totalRevenue = trips?.reduce((sum, trip) => sum + Number(trip.total_invoice), 0) || 0
-  const totalDriverEarnings = trips?.reduce((sum, trip) => sum + Number(trip.driver_earnings), 0) || 0
-  const totalCompanyEarnings = trips?.reduce((sum, trip) => sum + Number(trip.company_earnings), 0) || 0
+  // Handle error case - ensure trips is an empty array if null/undefined
+  const safeTrips = trips || []
+
+  const totalTrips = safeTrips.length || 0
+  const totalRevenue = safeTrips.reduce((sum, trip) => sum + Number(trip.total_invoice || 0), 0) || 0
+  const totalDriverEarnings = safeTrips.reduce((sum, trip) => sum + Number(trip.driver_earnings || 0), 0) || 0
+  const totalCompanyEarnings = safeTrips.reduce((sum, trip) => sum + Number(trip.company_earnings || 0), 0) || 0
 
   return (
     <div className="space-y-6">
@@ -95,7 +104,7 @@ export default async function TripsPage() {
           <CardTitle>Trip History</CardTitle>
         </CardHeader>
         <CardContent>
-          {!trips || trips.length === 0 ? (
+          {!safeTrips || safeTrips.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg">No trips uploaded yet</p>
@@ -103,7 +112,11 @@ export default async function TripsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {trips.map((trip) => (
+              {safeTrips.map((trip) => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/3c98a534-df79-472e-90e9-e6b096ba1309',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/trips/page.tsx:110',message:'Before accessing trip.drivers',data:{tripId:trip?.id,driversExists:!!trip?.drivers,driverType:trip?.drivers?.driver_type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                // #endregion
+                return (
                 <Link
                   key={trip.id}
                   href={`/trips/${trip.id}`}
@@ -116,7 +129,7 @@ export default async function TripsPage() {
                         <Badge variant="secondary">{trip.total_loads} loads</Badge>
                         {trip.drivers && (
                           <Badge variant="outline">
-                            {trip.drivers.driver_type === 'company_driver' ? 'Company Driver' : 'Owner Operator'}
+                            {trip.drivers?.driver_type === 'company_driver' ? 'Company Driver' : 'Owner Operator'}
                           </Badge>
                         )}
                       </div>
@@ -141,7 +154,7 @@ export default async function TripsPage() {
                     </div>
                   </div>
                 </Link>
-              ))}
+              )})}
             </div>
           )}
         </CardContent>
