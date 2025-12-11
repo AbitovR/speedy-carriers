@@ -15,6 +15,11 @@ export interface Expenses {
   fuel: number
   ifta: number
   localTowing: number
+  prepass: number
+  shipcar: number
+  superDispatch: number
+  other: number
+  paidInAdvance: number
 }
 
 export interface TripSummary {
@@ -91,7 +96,12 @@ export function calculateTripSummary(
     expenses.eldLogbook +
     expenses.insurance +
     expenses.fuel +
-    expenses.ifta
+    expenses.ifta +
+    expenses.prepass +
+    expenses.shipcar +
+    expenses.superDispatch +
+    expenses.other +
+    expenses.paidInAdvance
 
   // Step 4: Total expenses (dispatch fee + other expenses + local towing)
   const totalExpenses = dispatchFeeAmount + otherExpenses + localTowingFee

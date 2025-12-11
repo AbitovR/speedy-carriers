@@ -29,6 +29,11 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
     fuel: 0,
     ifta: 0,
     localTowing: 0,
+    prepass: 0,
+    shipcar: 0,
+    superDispatch: 0,
+    other: 0,
+    paidInAdvance: 0,
   })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -184,6 +189,11 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
       if (expenses.fuel > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'fuel', amount: expenses.fuel })
       if (expenses.ifta > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'ifta', amount: expenses.ifta })
       if (expenses.localTowing > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'local_towing', amount: expenses.localTowing })
+      if (expenses.prepass > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'prepass', amount: expenses.prepass })
+      if (expenses.shipcar > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'shipcar', amount: expenses.shipcar })
+      if (expenses.superDispatch > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'super_dispatch', amount: expenses.superDispatch })
+      if (expenses.other > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'other', amount: expenses.other })
+      if (expenses.paidInAdvance > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'paid_in_advance', amount: expenses.paidInAdvance })
 
       if (expensesToInsert.length > 0) {
         await supabase.from('expenses').insert(expensesToInsert)
@@ -212,25 +222,34 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
       </button>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Upload Trip</h2>
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black/50 z-50 transition-opacity duration-300"
+            onClick={() => setShowModal(false)}
+          />
+          
+          {/* Side Slide Panel */}
+          <div className="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-background border-l border-border shadow-xl flex flex-col transform transition-transform duration-300 ease-out translate-x-0">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-foreground">Upload Trip</h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <X className="h-6 w-6" />
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {message && (
                 <div
                   className={`p-4 rounded-md ${
                     message.type === 'error'
-                      ? 'bg-red-50 text-red-800 border border-red-200'
-                      : 'bg-green-50 text-green-800 border border-green-200'
+                      ? 'bg-destructive/10 text-destructive border border-destructive/20'
+                      : 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20'
                   }`}
                 >
                   {message.text}
@@ -280,7 +299,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
               </div>
 
               {driverType === 'owner_operator' && (
-                <div className="border-t pt-6">
+                <div className="border-t border-border pt-6">
                   <h3 className="text-lg font-semibold text-foreground mb-4">
                     Expenses (Owner Operator)
                   </h3>
@@ -375,6 +394,81 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                         className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        PrePass
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={expenses.prepass}
+                        onChange={(e) =>
+                          setExpenses({ ...expenses, prepass: parseFloat(e.target.value) || 0 })
+                        }
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        ShipCar
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={expenses.shipcar}
+                        onChange={(e) =>
+                          setExpenses({ ...expenses, shipcar: parseFloat(e.target.value) || 0 })
+                        }
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Super Dispatch
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={expenses.superDispatch}
+                        onChange={(e) =>
+                          setExpenses({ ...expenses, superDispatch: parseFloat(e.target.value) || 0 })
+                        }
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Other
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={expenses.other}
+                        onChange={(e) =>
+                          setExpenses({ ...expenses, other: parseFloat(e.target.value) || 0 })
+                        }
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Paid in Advance
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={expenses.paidInAdvance}
+                        onChange={(e) =>
+                          setExpenses({ ...expenses, paidInAdvance: parseFloat(e.target.value) || 0 })
+                        }
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                      />
+                    </div>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
                     Note: Dispatch fee (10%) is automatically calculated
@@ -382,25 +476,27 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                 </div>
               )}
 
-              <div className="flex gap-4 pt-4">
-                <button
-                  onClick={handleUpload}
-                  disabled={loading || !file}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {loading ? 'Uploading...' : 'Upload Trip'}
-                </button>
-                <button
-                  onClick={() => setShowModal(false)}
-                  disabled={loading}
-                  className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
+            </div>
+
+            {/* Footer with Actions */}
+            <div className="px-6 py-4 border-t border-border flex gap-4">
+              <button
+                onClick={handleUpload}
+                disabled={loading || !file}
+                className="flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? 'Uploading...' : 'Upload Trip'}
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                disabled={loading}
+                className="flex-1 bg-secondary text-secondary-foreground py-2 px-4 rounded-md hover:bg-secondary/80 transition-colors"
+              >
+                Cancel
+              </button>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   )
