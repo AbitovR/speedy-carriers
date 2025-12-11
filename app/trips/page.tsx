@@ -5,8 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { FileText, Calendar, User, DollarSign } from 'lucide-react'
-import { appendFile } from 'fs/promises'
-import { join } from 'path'
 import TripsFilter from '@/components/trips-filter'
 import { Suspense } from 'react'
 
@@ -15,19 +13,11 @@ interface TripsPageProps {
 }
 
 export default async function TripsPage({ searchParams }: TripsPageProps) {
-  // #region agent log
-  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:17',message:'Page component started',data:{hasSearchParams:!!searchParams,searchParamsIsPromise:searchParams instanceof Promise},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'A'})+'\n');}catch(e){}
-  // #endregion
-  
   const supabase = await createClient()
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  // #region agent log
-  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:24',message:'User auth check',data:{hasUser:!!user,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'B'})+'\n');}catch(e){}
-  // #endregion
 
   if (!user) {
     redirect('/login')
@@ -37,19 +27,11 @@ export default async function TripsPage({ searchParams }: TripsPageProps) {
   const params = searchParams instanceof Promise ? await searchParams : searchParams || {}
   const driverFilter = params?.driver
 
-  // #region agent log
-  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:30',message:'Search params parsed',data:{driverFilter,paramsType:searchParams instanceof Promise ? 'Promise' : typeof params},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'A'})+'\n');}catch(e){}
-  // #endregion
-
   // Fetch all drivers for the filter
-  const { data: drivers, error: driversError } = await supabase
+  const { data: drivers } = await supabase
     .from('drivers')
     .select('id, name')
     .order('name', { ascending: true })
-
-  // #region agent log
-  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:36',message:'Drivers query result',data:{hasError:!!driversError,errorMessage:driversError?.message,driversIsNull:!drivers,driversLength:drivers?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'C'})+'\n');}catch(e){}
-  // #endregion
 
   // Build query for trips
   let tripsQuery = supabase
@@ -71,10 +53,6 @@ export default async function TripsPage({ searchParams }: TripsPageProps) {
 
   const { data: trips, error } = await tripsQuery
 
-  // #region agent log
-  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:56',message:'Trips query result',data:{hasError:!!error,errorMessage:error?.message,tripsIsNull:!trips,tripsLength:trips?.length,driverFilter},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'C'})+'\n');}catch(e){}
-  // #endregion
-
   if (error) {
     console.error('Error fetching trips:', error)
   }
@@ -88,10 +66,6 @@ export default async function TripsPage({ searchParams }: TripsPageProps) {
   const totalRevenue = filteredTrips.reduce((sum, trip) => sum + Number(trip.total_invoice || 0), 0) || 0
   const totalDriverEarnings = filteredTrips.reduce((sum, trip) => sum + Number(trip.driver_earnings || 0), 0) || 0
   const totalCompanyEarnings = filteredTrips.reduce((sum, trip) => sum + Number(trip.company_earnings || 0), 0) || 0
-
-  // #region agent log
-  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:75',message:'Before render',data:{safeTripsLength:safeTrips.length,filteredTripsLength:filteredTrips.length,totalTrips,totalRevenue,driversLength:drivers?.length,willRenderFilter:!!(drivers && drivers.length > 0)},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'D'})+'\n');}catch(e){}
-  // #endregion
 
   return (
     <div className="space-y-6">
@@ -170,11 +144,7 @@ export default async function TripsPage({ searchParams }: TripsPageProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredTrips.map((trip) => {
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/3c98a534-df79-472e-90e9-e6b096ba1309',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/trips/page.tsx:153',message:'Rendering trip item',data:{tripId:trip?.id,driversExists:!!trip?.drivers,driverType:trip?.drivers?.driver_type,hasTripName:!!trip?.trip_name},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'D'})}).catch(()=>{});
-                // #endregion
-                return (
+              {filteredTrips.map((trip) => (
                 <Link
                   key={trip.id}
                   href={`/trips/${trip.id}`}
@@ -212,7 +182,7 @@ export default async function TripsPage({ searchParams }: TripsPageProps) {
                     </div>
                   </div>
                 </Link>
-              )})}
+              ))}
             </div>
           )}
         </CardContent>

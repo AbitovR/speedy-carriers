@@ -14,24 +14,12 @@ interface TripsFilterProps {
 }
 
 export default function TripsFilter({ drivers }: TripsFilterProps) {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/3c98a534-df79-472e-90e9-e6b096ba1309',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'components/trips-filter.tsx:16',message:'Filter component mounted',data:{driversLength:drivers?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'E'})}).catch(()=>{});
-  // #endregion
-  
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
   const selectedDriverId = searchParams.get('driver') || 'all'
 
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/3c98a534-df79-472e-90e9-e6b096ba1309',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'components/trips-filter.tsx:22',message:'Filter component initialized',data:{selectedDriverId,hasSearchParams:!!searchParams},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
-
   const handleFilterChange = (driverId: string) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/3c98a534-df79-472e-90e9-e6b096ba1309',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'components/trips-filter.tsx:25',message:'Filter change triggered',data:{driverId,currentSelected:selectedDriverId},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    
     startTransition(() => {
       const params = new URLSearchParams(searchParams.toString())
       if (driverId === 'all') {
