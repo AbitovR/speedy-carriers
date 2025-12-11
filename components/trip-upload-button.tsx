@@ -238,22 +238,22 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Trip File (CSV or Excel) *
                 </label>
                 <input
                   type="file"
                   accept=".csv,.xlsx,.xls"
                   onChange={handleFileChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                 />
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-muted-foreground">
                   SuperDispatch trip report format
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Trip Name *
                 </label>
                 <input
@@ -261,13 +261,13 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                   value={tripName}
                   onChange={(e) => setTripName(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                   placeholder="Trip 001"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Trip Date *
                 </label>
                 <input
@@ -275,18 +275,18 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                   value={tripDate}
                   onChange={(e) => setTripDate(e.target.value)}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                 />
               </div>
 
               {driverType === 'owner_operator' && (
                 <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
                     Expenses (Owner Operator)
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Parking
                       </label>
                       <input
@@ -297,11 +297,11 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                         onChange={(e) =>
                           setExpenses({ ...expenses, parking: parseFloat(e.target.value) || 0 })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         ELD/LogBook
                       </label>
                       <input
@@ -312,11 +312,11 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                         onChange={(e) =>
                           setExpenses({ ...expenses, eldLogbook: parseFloat(e.target.value) || 0 })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Insurance
                       </label>
                       <input
@@ -327,11 +327,11 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                         onChange={(e) =>
                           setExpenses({ ...expenses, insurance: parseFloat(e.target.value) || 0 })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Fuel
                       </label>
                       <input
@@ -342,11 +342,11 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                         onChange={(e) =>
                           setExpenses({ ...expenses, fuel: parseFloat(e.target.value) || 0 })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         IFTA
                       </label>
                       <input
@@ -357,11 +357,11 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                         onChange={(e) =>
                           setExpenses({ ...expenses, ifta: parseFloat(e.target.value) || 0 })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Local Towing
                       </label>
                       <input
@@ -372,11 +372,11 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                         onChange={(e) =>
                           setExpenses({ ...expenses, localTowing: parseFloat(e.target.value) || 0 })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
                     </div>
                   </div>
-                  <p className="mt-2 text-sm text-gray-500">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     Note: Dispatch fee (10%) is automatically calculated
                   </p>
                 </div>
