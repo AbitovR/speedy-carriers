@@ -7,20 +7,52 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import { FileText, Calendar, User, DollarSign } from 'lucide-react'
 import { appendFile } from 'fs/promises'
 import { join } from 'path'
+import TripsFilter from '@/components/trips-filter'
+import { Suspense } from 'react'
 
-export default async function TripsPage() {
+interface TripsPageProps {
+  searchParams?: Promise<{ driver?: string }> | { driver?: string }
+}
+
+export default async function TripsPage({ searchParams }: TripsPageProps) {
+  // #region agent log
+  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:17',message:'Page component started',data:{hasSearchParams:!!searchParams,searchParamsIsPromise:searchParams instanceof Promise},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'A'})+'\n');}catch(e){}
+  // #endregion
+  
   const supabase = await createClient()
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // #region agent log
+  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:24',message:'User auth check',data:{hasUser:!!user,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'B'})+'\n');}catch(e){}
+  // #endregion
+
   if (!user) {
     redirect('/login')
   }
 
-  // Fetch all trips with driver information
-  const { data: trips, error } = await supabase
+  // Get filter from search params
+  const params = searchParams instanceof Promise ? await searchParams : searchParams || {}
+  const driverFilter = params?.driver
+
+  // #region agent log
+  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:30',message:'Search params parsed',data:{driverFilter,paramsType:searchParams instanceof Promise ? 'Promise' : typeof params},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'A'})+'\n');}catch(e){}
+  // #endregion
+
+  // Fetch all drivers for the filter
+  const { data: drivers, error: driversError } = await supabase
+    .from('drivers')
+    .select('id, name')
+    .order('name', { ascending: true })
+
+  // #region agent log
+  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:36',message:'Drivers query result',data:{hasError:!!driversError,errorMessage:driversError?.message,driversIsNull:!drivers,driversLength:drivers?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'C'})+'\n');}catch(e){}
+  // #endregion
+
+  // Build query for trips
+  let tripsQuery = supabase
     .from('trips')
     .select(`
       *,
@@ -32,8 +64,15 @@ export default async function TripsPage() {
     `)
     .order('trip_date', { ascending: false })
 
+  // Apply driver filter if specified
+  if (driverFilter && driverFilter !== 'all') {
+    tripsQuery = tripsQuery.eq('driver_id', driverFilter)
+  }
+
+  const { data: trips, error } = await tripsQuery
+
   // #region agent log
-  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:35',message:'Trips query result',data:{hasError:!!error,errorMessage:error?.message,tripsIsNull:!trips,tripsLength:trips?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})+'\n');}catch(e){}
+  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:56',message:'Trips query result',data:{hasError:!!error,errorMessage:error?.message,tripsIsNull:!trips,tripsLength:trips?.length,driverFilter},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'C'})+'\n');}catch(e){}
   // #endregion
 
   if (error) {
@@ -43,16 +82,29 @@ export default async function TripsPage() {
   // Handle error case - ensure trips is an empty array if null/undefined
   const safeTrips = trips || []
 
-  const totalTrips = safeTrips.length || 0
-  const totalRevenue = safeTrips.reduce((sum, trip) => sum + Number(trip.total_invoice || 0), 0) || 0
-  const totalDriverEarnings = safeTrips.reduce((sum, trip) => sum + Number(trip.driver_earnings || 0), 0) || 0
-  const totalCompanyEarnings = safeTrips.reduce((sum, trip) => sum + Number(trip.company_earnings || 0), 0) || 0
+  // Calculate stats for filtered trips (filtering happens in the query)
+  const filteredTrips = safeTrips
+  const totalTrips = filteredTrips.length || 0
+  const totalRevenue = filteredTrips.reduce((sum, trip) => sum + Number(trip.total_invoice || 0), 0) || 0
+  const totalDriverEarnings = filteredTrips.reduce((sum, trip) => sum + Number(trip.driver_earnings || 0), 0) || 0
+  const totalCompanyEarnings = filteredTrips.reduce((sum, trip) => sum + Number(trip.company_earnings || 0), 0) || 0
+
+  // #region agent log
+  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/trips/page.tsx:75',message:'Before render',data:{safeTripsLength:safeTrips.length,filteredTripsLength:filteredTrips.length,totalTrips,totalRevenue,driversLength:drivers?.length,willRenderFilter:!!(drivers && drivers.length > 0)},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'D'})+'\n');}catch(e){}
+  // #endregion
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">All Trips</h1>
-        <p className="text-muted-foreground mt-1">View and manage all uploaded trips</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">All Trips</h1>
+          <p className="text-muted-foreground mt-1">View and manage all uploaded trips</p>
+        </div>
+        {drivers && drivers.length > 0 && (
+          <Suspense fallback={<div className="h-10 w-64 bg-muted animate-pulse rounded-lg" />}>
+            <TripsFilter drivers={drivers} />
+          </Suspense>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -110,11 +162,17 @@ export default async function TripsPage() {
               <p className="text-lg">No trips uploaded yet</p>
               <p className="text-sm mt-2">Upload your first trip from a driver&apos;s profile page</p>
             </div>
+          ) : filteredTrips.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg">No trips found for selected driver</p>
+              <p className="text-sm mt-2">Try selecting a different driver or view all trips</p>
+            </div>
           ) : (
             <div className="space-y-4">
-              {safeTrips.map((trip) => {
+              {filteredTrips.map((trip) => {
                 // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/3c98a534-df79-472e-90e9-e6b096ba1309',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/trips/page.tsx:110',message:'Before accessing trip.drivers',data:{tripId:trip?.id,driversExists:!!trip?.drivers,driverType:trip?.drivers?.driver_type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                fetch('http://127.0.0.1:7242/ingest/3c98a534-df79-472e-90e9-e6b096ba1309',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/trips/page.tsx:153',message:'Rendering trip item',data:{tripId:trip?.id,driversExists:!!trip?.drivers,driverType:trip?.drivers?.driver_type,hasTripName:!!trip?.trip_name},timestamp:Date.now(),sessionId:'debug-session',runId:'test-local',hypothesisId:'D'})}).catch(()=>{});
                 // #endregion
                 return (
                 <Link
