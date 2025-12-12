@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Upload, Edit, FileText } from 'lucide-react'
+import { ArrowLeft, Upload, Edit, FileText, DollarSign, TrendingUp, Award, Truck } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import TripUploadButton from '@/components/trip-upload-button'
 import DeleteTripButton from '@/components/delete-trip-button'
@@ -56,6 +56,14 @@ export default async function DriverProfilePage({
   const totalRevenue = typedTrips.reduce((sum, trip) => sum + (trip.total_invoice || 0), 0)
   const totalEarnings = typedTrips.reduce((sum, trip) => sum + (trip.driver_earnings || 0), 0)
   const totalLoads = typedTrips.reduce((sum, trip) => sum + (trip.total_loads || 0), 0)
+  
+  // Calculate analytics
+  const averageTripPrice = totalTrips > 0 ? totalRevenue / totalTrips : 0
+  const bestTrip = typedTrips.length > 0 
+    ? typedTrips.reduce((best, trip) => 
+        (trip.total_invoice || 0) > (best.total_invoice || 0) ? trip : best
+      )
+    : null
 
   return (
     <div className="space-y-6">
@@ -67,80 +75,128 @@ export default async function DriverProfilePage({
         Back to Drivers
       </Link>
 
-      {/* Driver Header */}
-      <div className="bg-card rounded-lg shadow p-6">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{typedDriver.name}</h1>
-            <p className="text-muted-foreground mt-1">
-              {typedDriver.driver_type === 'company_driver'
-                ? 'Company Driver (32%)'
-                : 'Owner Operator (100% after 10% dispatch fee)'}
-            </p>
+      {/* Driver Header - Compact */}
+      <div className="bg-card border border-border rounded-xl shadow-sm p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl font-bold text-foreground">{typedDriver.name}</h1>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    typedDriver.status === 'active'
+                      ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                      : 'bg-muted text-foreground'
+                  }`}
+                >
+                  {typedDriver.status}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                {typedDriver.driver_type === 'company_driver'
+                  ? 'Company Driver (32%)'
+                  : 'Owner Operator (100% after 10% dispatch fee)'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              {typedDriver.email && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="font-medium text-foreground">{typedDriver.email}</p>
+                </div>
+              )}
+              {typedDriver.phone && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Phone</p>
+                  <p className="font-medium text-foreground">{typedDriver.phone}</p>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="flex gap-2">
-            <span
-              className={`px-4 py-2 rounded-full text-sm font-medium ${
-                typedDriver.status === 'active'
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                  : 'bg-muted text-foreground'
-              }`}
-            >
-              {typedDriver.status}
-            </span>
-            <Link
-              href={`/drivers/${id}/edit`}
-              className="inline-flex items-center gap-2 bg-secondary text-foreground px-4 py-2 rounded-lg hover:bg-secondary/80 transition-colors"
-            >
-              <Edit className="h-4 w-4" />
-              Edit
-            </Link>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          {typedDriver.email && (
-            <div>
-              <p className="text-muted-foreground">Email</p>
-              <p className="font-medium text-foreground">{typedDriver.email}</p>
-            </div>
-          )}
-          {typedDriver.phone && (
-            <div>
-              <p className="text-muted-foreground">Phone</p>
-              <p className="font-medium text-foreground">{typedDriver.phone}</p>
-            </div>
-          )}
-          {typedDriver.license_number && (
-            <div>
-              <p className="text-muted-foreground">License</p>
-              <p className="font-medium text-foreground">{typedDriver.license_number}</p>
-            </div>
-          )}
+          <Link
+            href={`/drivers/${id}/edit`}
+            className="inline-flex items-center gap-2 bg-secondary text-foreground px-3 py-2 rounded-lg hover:bg-secondary/80 transition-colors text-sm"
+          >
+            <Edit className="h-4 w-4" />
+            Edit
+          </Link>
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Analytics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-card rounded-lg shadow p-6">
-          <p className="text-sm text-muted-foreground">Total Trips</p>
-          <p className="text-3xl font-bold text-foreground mt-2">{totalTrips}</p>
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-lg bg-primary/10">
+              <FileText className="w-6 h-6 text-primary" />
+            </div>
+          </div>
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Trips</h3>
+          <div className="text-3xl font-bold text-foreground">{totalTrips}</div>
         </div>
-        <div className="bg-card rounded-lg shadow p-6">
-          <p className="text-sm text-muted-foreground">Total Loads</p>
-          <p className="text-3xl font-bold text-foreground mt-2">{totalLoads}</p>
+        
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-lg bg-primary/10">
+              <DollarSign className="w-6 h-6 text-primary" />
+            </div>
+          </div>
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Average Trip Price</h3>
+          <div className="text-3xl font-bold text-foreground">
+            {formatCurrency(averageTripPrice)}
+          </div>
         </div>
-        <div className="bg-card rounded-lg shadow p-6">
-          <p className="text-sm text-muted-foreground">Total Revenue</p>
-          <p className="text-3xl font-bold text-foreground mt-2">
+        
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-lg bg-primary/10">
+              <Award className="w-6 h-6 text-primary" />
+            </div>
+          </div>
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Best Trip</h3>
+          <div className="text-3xl font-bold text-foreground">
+            {bestTrip ? formatCurrency(bestTrip.total_invoice || 0) : '$0.00'}
+          </div>
+          {bestTrip && (
+            <p className="text-xs text-muted-foreground mt-1">{bestTrip.trip_name}</p>
+          )}
+        </div>
+        
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-lg bg-primary/10">
+              <TrendingUp className="w-6 h-6 text-primary" />
+            </div>
+          </div>
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Revenue</h3>
+          <div className="text-3xl font-bold text-foreground">
             {formatCurrency(totalRevenue)}
-          </p>
+          </div>
         </div>
-        <div className="bg-card rounded-lg shadow p-6">
-          <p className="text-sm text-muted-foreground">Driver Earnings</p>
-          <p className="text-3xl font-bold text-green-600 mt-2">
+      </div>
+
+      {/* Additional Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-lg bg-primary/10">
+              <Truck className="w-6 h-6 text-primary" />
+            </div>
+          </div>
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Total Loads</h3>
+          <div className="text-3xl font-bold text-foreground">{totalLoads}</div>
+        </div>
+        
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 rounded-lg bg-green-500/10">
+              <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+          <h3 className="text-sm font-medium text-muted-foreground mb-2">Driver Earnings</h3>
+          <div className="text-3xl font-bold text-green-600 dark:text-green-400">
             {formatCurrency(totalEarnings)}
-          </p>
+          </div>
         </div>
       </div>
 
