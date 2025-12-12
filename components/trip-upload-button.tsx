@@ -35,6 +35,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
     other: 0,
     paidInAdvance: 0,
   })
+  const [otherExpenseComment, setOtherExpenseComment] = useState('')
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -192,7 +193,12 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
       if (expenses.prepass > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'prepass', amount: expenses.prepass })
       if (expenses.shipcar > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'shipcar', amount: expenses.shipcar })
       if (expenses.superDispatch > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'super_dispatch', amount: expenses.superDispatch })
-      if (expenses.other > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'other', amount: expenses.other })
+      if (expenses.other > 0) expensesToInsert.push({ 
+        trip_id: tripData.id, 
+        category: 'other', 
+        amount: expenses.other,
+        notes: otherExpenseComment.trim() || null
+      })
       if (expenses.paidInAdvance > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'paid_in_advance', amount: expenses.paidInAdvance })
 
       if (expensesToInsert.length > 0) {
@@ -200,6 +206,24 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
       }
 
       setMessage({ type: 'success', text: 'Trip uploaded successfully!' })
+      // Reset form
+      setFile(null)
+      setTripName('')
+      setTripDate(new Date().toISOString().split('T')[0])
+      setExpenses({
+        parking: 0,
+        eldLogbook: 0,
+        insurance: 0,
+        fuel: 0,
+        ifta: 0,
+        localTowing: 0,
+        prepass: 0,
+        shipcar: 0,
+        superDispatch: 0,
+        other: 0,
+        paidInAdvance: 0,
+      })
+      setOtherExpenseComment('')
       setTimeout(() => {
         setShowModal(false)
         router.refresh()
@@ -439,7 +463,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                         className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
                     </div>
-                    <div>
+                    <div className="col-span-2">
                       <label className="block text-sm font-medium text-foreground mb-2">
                         Other
                       </label>
@@ -451,7 +475,14 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                         onChange={(e) =>
                           setExpenses({ ...expenses, other: parseFloat(e.target.value) || 0 })
                         }
-                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground mb-2"
+                      />
+                      <textarea
+                        value={otherExpenseComment}
+                        onChange={(e) => setOtherExpenseComment(e.target.value)}
+                        placeholder="Add comments for this expense..."
+                        rows={2}
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground resize-none"
                       />
                     </div>
                     <div>

@@ -11,7 +11,7 @@ interface EditTripButtonProps {
   tripName: string
   tripDate: string
   driverType: 'company_driver' | 'owner_operator'
-  currentExpenses: Array<{ id: string; category: string; amount: number }>
+  currentExpenses: Array<{ id: string; category: string; amount: number; notes?: string | null }>
 }
 
 export default function EditTripButton({
@@ -41,11 +41,13 @@ export default function EditTripButton({
     other: 0,
     paidInAdvance: 0,
   })
+  const [otherExpenseComment, setOtherExpenseComment] = useState('')
 
   // Load current expenses into form
   useEffect(() => {
     if (showPanel && currentExpenses) {
       const expenseMap: Partial<Expenses> = {}
+      let otherComment = ''
       currentExpenses.forEach((exp) => {
         const category = exp.category
         if (category === 'parking') expenseMap.parking = exp.amount
@@ -57,10 +59,14 @@ export default function EditTripButton({
         else if (category === 'prepass') expenseMap.prepass = exp.amount
         else if (category === 'shipcar') expenseMap.shipcar = exp.amount
         else if (category === 'super_dispatch') expenseMap.superDispatch = exp.amount
-        else if (category === 'other') expenseMap.other = exp.amount
+        else if (category === 'other') {
+          expenseMap.other = exp.amount
+          otherComment = exp.notes || ''
+        }
         else if (category === 'paid_in_advance') expenseMap.paidInAdvance = exp.amount
       })
       setExpenses((prev) => ({ ...prev, ...expenseMap }))
+      setOtherExpenseComment(otherComment)
     }
   }, [showPanel, currentExpenses])
 
@@ -127,7 +133,12 @@ export default function EditTripButton({
       if (expenses.prepass > 0) expensesToInsert.push({ trip_id: tripId, category: 'prepass', amount: expenses.prepass })
       if (expenses.shipcar > 0) expensesToInsert.push({ trip_id: tripId, category: 'shipcar', amount: expenses.shipcar })
       if (expenses.superDispatch > 0) expensesToInsert.push({ trip_id: tripId, category: 'super_dispatch', amount: expenses.superDispatch })
-      if (expenses.other > 0) expensesToInsert.push({ trip_id: tripId, category: 'other', amount: expenses.other })
+      if (expenses.other > 0) expensesToInsert.push({ 
+        trip_id: tripId, 
+        category: 'other', 
+        amount: expenses.other,
+        notes: otherExpenseComment.trim() || null
+      })
       if (expenses.paidInAdvance > 0) expensesToInsert.push({ trip_id: tripId, category: 'paid_in_advance', amount: expenses.paidInAdvance })
 
       if (expensesToInsert.length > 0) {
@@ -360,7 +371,7 @@ export default function EditTripButton({
                         className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
                     </div>
-                    <div>
+                    <div className="col-span-2">
                       <label className="block text-sm font-medium text-foreground mb-2">
                         Other
                       </label>
@@ -372,7 +383,14 @@ export default function EditTripButton({
                         onChange={(e) =>
                           setExpenses({ ...expenses, other: parseFloat(e.target.value) || 0 })
                         }
-                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground mb-2"
+                      />
+                      <textarea
+                        value={otherExpenseComment}
+                        onChange={(e) => setOtherExpenseComment(e.target.value)}
+                        placeholder="Add comments for this expense..."
+                        rows={2}
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground resize-none"
                       />
                     </div>
                     <div>
