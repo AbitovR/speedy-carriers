@@ -47,7 +47,7 @@ export interface TripSummary {
 
 export function normalizePaymentMethod(method: string): string {
   const normalized = method?.toLowerCase().trim() || ''
-  if (normalized === 'cod' || normalized === 'cash') return 'cash'
+  if (normalized === 'cod' || normalized === 'cash' || normalized === 'zelle') return 'cash'
   if (normalized === 'check' || normalized === 'ach') return 'check'
   return 'billing'
 }
