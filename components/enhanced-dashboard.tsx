@@ -28,7 +28,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 
 interface MetricCardProps {
   title: string
@@ -47,6 +47,20 @@ interface ChartDataPoint {
   earnings: number
 }
 
+interface Trip {
+  id: string
+  driver_id: string
+  trip_date: string
+  total_invoice: number
+  company_earnings: number
+  driver_earnings: number
+}
+
+interface Driver {
+  id: string
+  driver_type: 'company_driver' | 'owner_operator'
+}
+
 interface DashboardData {
   totalDrivers: number
   totalTrips: number
@@ -59,6 +73,8 @@ interface DashboardData {
     value: number
     color: string
   }>
+  allTrips: Trip[]
+  drivers: Driver[]
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({
@@ -115,6 +131,128 @@ const MetricCard: React.FC<MetricCardProps> = ({
 export default function EnhancedDashboard({ data }: { data: DashboardData }) {
   const [timeFrame, setTimeFrame] = useState<'7d' | '30d' | '90d'>('30d')
 
+  // Filter trips based on selected time frame
+  const filteredTrips = useMemo(() => {
+    const now = new Date()
+    const cutoffDate = new Date()
+    
+    if (timeFrame === '7d') {
+      cutoffDate.setDate(now.getDate() - 7)
+    } else if (timeFrame === '30d') {
+      cutoffDate.setDate(now.getDate() - 30)
+    } else if (timeFrame === '90d') {
+      cutoffDate.setDate(now.getDate() - 90)
+    }
+    
+    return data.allTrips.filter(trip => {
+      const tripDate = new Date(trip.trip_date)
+      return tripDate >= cutoffDate && tripDate <= now
+    })
+  }, [data.allTrips, timeFrame])
+
+  // Calculate filtered metrics
+  const filteredMetrics = useMemo(() => {
+    const totalTrips = filteredTrips.length
+    const totalRevenue = filteredTrips.reduce((sum, trip) => sum + (trip.total_invoice || 0), 0)
+    const totalEarnings = filteredTrips.reduce((sum, trip) => sum + (trip.company_earnings || 0), 0)
+    const driverEarnings = filteredTrips.reduce((sum, trip) => sum + (trip.driver_earnings || 0), 0)
+    
+    return {
+      totalTrips,
+      totalRevenue,
+      totalEarnings,
+      driverEarnings,
+    }
+  }, [filteredTrips])
+
+  // Calculate chart data based on filtered trips
+  const chartData = useMemo(() => {
+    const now = new Date()
+    const days = timeFrame === '7d' ? 7 : timeFrame === '30d' ? 30 : 90
+    const dataPoints: ChartDataPoint[] = []
+    
+    // For 7 days, show daily data
+    if (timeFrame === '7d') {
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now)
+        date.setDate(date.getDate() - i)
+        const dayStart = new Date(date)
+        dayStart.setHours(0, 0, 0, 0)
+        const dayEnd = new Date(date)
+        dayEnd.setHours(23, 59, 59, 999)
+        
+        const dayTrips = filteredTrips.filter(trip => {
+          const tripDate = new Date(trip.trip_date)
+          return tripDate >= dayStart && tripDate <= dayEnd
+        })
+        
+        const revenue = dayTrips.reduce((sum, trip) => sum + (trip.total_invoice || 0), 0)
+        const expenses = dayTrips.reduce((sum, trip) => sum + (trip.driver_earnings || 0), 0)
+        const earnings = dayTrips.reduce((sum, trip) => sum + (trip.company_earnings || 0), 0)
+        
+        dataPoints.push({
+          name: dayStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          revenue,
+          expenses,
+          earnings,
+        })
+      }
+    } else {
+      // For 30 and 90 days, show weekly data
+      const weeks = timeFrame === '30d' ? 4 : 12
+      for (let i = weeks - 1; i >= 0; i--) {
+        const weekStart = new Date(now)
+        weekStart.setDate(weekStart.getDate() - (i + 1) * 7)
+        weekStart.setHours(0, 0, 0, 0)
+        
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekEnd.getDate() + 6)
+        weekEnd.setHours(23, 59, 59, 999)
+        
+        const weekTrips = filteredTrips.filter(trip => {
+          const tripDate = new Date(trip.trip_date)
+          return tripDate >= weekStart && tripDate <= weekEnd
+        })
+        
+        const revenue = weekTrips.reduce((sum, trip) => sum + (trip.total_invoice || 0), 0)
+        const expenses = weekTrips.reduce((sum, trip) => sum + (trip.driver_earnings || 0), 0)
+        const earnings = weekTrips.reduce((sum, trip) => sum + (trip.company_earnings || 0), 0)
+        
+        dataPoints.push({
+          name: `Week ${weeks - i}`,
+          revenue,
+          expenses,
+          earnings,
+        })
+      }
+    }
+    
+    return dataPoints
+  }, [filteredTrips, timeFrame])
+
+  // Calculate revenue breakdown based on filtered trips
+  const revenueBreakdown = useMemo(() => {
+    const companyDriverRevenue = filteredTrips.filter(trip => {
+      const driver = data.drivers.find(d => d.id === trip.driver_id)
+      return driver?.driver_type === 'company_driver'
+    }).reduce((sum, trip) => sum + (trip.total_invoice || 0), 0)
+
+    const ownerOperatorRevenue = filteredTrips.filter(trip => {
+      const driver = data.drivers.find(d => d.id === trip.driver_id)
+      return driver?.driver_type === 'owner_operator'
+    }).reduce((sum, trip) => sum + (trip.total_invoice || 0), 0)
+
+    const totalEarnings = filteredTrips.reduce((sum, trip) => sum + (trip.company_earnings || 0), 0)
+    const driverEarnings = filteredTrips.reduce((sum, trip) => sum + (trip.driver_earnings || 0), 0)
+
+    return [
+      { category: 'Owner Operators', value: ownerOperatorRevenue, color: '#3b82f6' },
+      { category: 'Company Drivers', value: companyDriverRevenue, color: '#8b5cf6' },
+      { category: 'Company Earnings', value: totalEarnings, color: '#10b981' },
+      { category: 'Driver Payments', value: driverEarnings, color: '#ec4899' },
+    ]
+  }, [filteredTrips, data.drivers])
+
   const metrics = [
     {
       title: 'Active Drivers',
@@ -124,22 +262,20 @@ export default function EnhancedDashboard({ data }: { data: DashboardData }) {
     },
     {
       title: 'Total Trips',
-      value: data.totalTrips,
+      value: filteredMetrics.totalTrips,
       icon: FileText,
       delay: 0.1,
     },
     {
       title: 'Total Revenue',
-      value: data.totalRevenue,
-      change: 12.5,
+      value: filteredMetrics.totalRevenue,
       icon: DollarSign,
       prefix: '$',
       delay: 0.2,
     },
     {
       title: 'Company Earnings',
-      value: data.totalEarnings,
-      change: 8.3,
+      value: filteredMetrics.totalEarnings,
       icon: TrendingUp,
       prefix: '$',
       delay: 0.3,
@@ -199,12 +335,12 @@ export default function EnhancedDashboard({ data }: { data: DashboardData }) {
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <span className="text-muted-foreground">
-                Last 12 Months
+                {timeFrame === '7d' ? 'Last 7 Days' : timeFrame === '30d' ? 'Last 30 Days' : 'Last 90 Days'}
               </span>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={350}>
-            <AreaChart data={data.monthlyData}>
+            <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -259,8 +395,8 @@ export default function EnhancedDashboard({ data }: { data: DashboardData }) {
             Revenue Breakdown
           </h2>
           <div className="space-y-4">
-            {data.revenueBreakdown.map((item, index) => {
-              const total = data.revenueBreakdown.reduce((sum, i) => sum + i.value, 0)
+            {revenueBreakdown.map((item, index) => {
+              const total = revenueBreakdown.reduce((sum, i) => sum + i.value, 0)
               const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0'
               return (
                 <div key={index} className="space-y-2">
@@ -308,7 +444,7 @@ export default function EnhancedDashboard({ data }: { data: DashboardData }) {
             Monthly Earnings Trend
           </h2>
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={data.monthlyData}>
+            <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
               <YAxis stroke="hsl(var(--muted-foreground))" />
@@ -342,7 +478,7 @@ export default function EnhancedDashboard({ data }: { data: DashboardData }) {
             Revenue vs Expenses
           </h2>
           <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={data.monthlyData.slice(0, 6)}>
+            <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
               <YAxis stroke="hsl(var(--muted-foreground))" />

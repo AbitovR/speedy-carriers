@@ -99,6 +99,8 @@ export default async function DashboardPage() {
     driverEarnings,
     monthlyData,
     revenueBreakdown,
+    allTrips: allTrips || [],
+    drivers: drivers || [],
   }
 
   return <EnhancedDashboard data={dashboardData} />
