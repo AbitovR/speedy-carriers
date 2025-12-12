@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ArrowLeft, Download } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useEffect, useState } from 'react'
+import EditTripButton from '@/components/edit-trip-button'
 
 export default function TripDetailsPage() {
   const params = useParams()
@@ -128,13 +129,22 @@ export default function TripDetailsPage() {
               {trip.driver.name} • {formatDate(trip.trip_date)}
             </p>
           </div>
-          <button
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors print:hidden"
-          >
-            <Download className="h-4 w-4" />
-            Print Statement
-          </button>
+          <div className="flex gap-2">
+            <EditTripButton
+              tripId={trip.id}
+              tripName={trip.trip_name}
+              tripDate={trip.trip_date}
+              driverType={driverType}
+              currentExpenses={trip.expenses || []}
+            />
+            <button
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors print:hidden"
+            >
+              <Download className="h-4 w-4" />
+              Print Statement
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
