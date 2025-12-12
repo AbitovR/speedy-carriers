@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { FileText, Calendar, User, DollarSign } from 'lucide-react'
+import { FileText, Calendar, User, DollarSign, CreditCard, AlertCircle } from 'lucide-react'
 import TripsFilter from '@/components/trips-filter'
 import { Suspense } from 'react'
 
@@ -152,12 +152,24 @@ export default async function TripsPage({ searchParams }: TripsPageProps) {
                 >
                   <div className="flex items-start justify-between">
                     <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold">{trip.trip_name}</h3>
                         <Badge variant="secondary">{trip.total_loads} loads</Badge>
                         {trip.drivers && (
                           <Badge variant="outline">
                             {trip.drivers?.driver_type === 'company_driver' ? 'Company Driver' : 'Owner Operator'}
+                          </Badge>
+                        )}
+                        {trip.payment_status === 'paid_in_full' && (
+                          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            Paid in Full
+                          </Badge>
+                        )}
+                        {trip.payment_status === 'payment_on_hold' && (
+                          <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            Payment on Hold
                           </Badge>
                         )}
                       </div>

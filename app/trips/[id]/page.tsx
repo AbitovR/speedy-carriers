@@ -7,6 +7,7 @@ import { ArrowLeft, Download } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useEffect, useState } from 'react'
 import EditTripButton from '@/components/edit-trip-button'
+import TripPaymentStatus from '@/components/trip-payment-status'
 
 export default function TripDetailsPage() {
   const params = useParams()
@@ -129,7 +130,14 @@ export default function TripDetailsPage() {
               {trip.driver.name} • {formatDate(trip.trip_date)}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <TripPaymentStatus
+              tripId={trip.id}
+              currentStatus={trip.payment_status}
+              currentPaymentMethod={trip.payment_method}
+              currentPaymentDate={trip.payment_date}
+              currentHoldReason={trip.hold_reason}
+            />
             <EditTripButton
               tripId={trip.id}
               tripName={trip.trip_name}
@@ -173,6 +181,47 @@ export default function TripDetailsPage() {
             </p>
           </div>
         </div>
+
+        {/* Payment Status Display */}
+        {trip.payment_status && (
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">Payment Status</p>
+                <div className="flex items-center gap-3">
+                  {trip.payment_status === 'paid_in_full' ? (
+                    <>
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                        Paid in Full
+                      </span>
+                      {trip.payment_method && (
+                        <span className="text-sm text-muted-foreground">
+                          via {trip.payment_method.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                        </span>
+                      )}
+                      {trip.payment_date && (
+                        <span className="text-sm text-muted-foreground">
+                          on {formatDate(trip.payment_date)}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                        Payment on Hold
+                      </span>
+                      {trip.hold_reason && (
+                        <span className="text-sm text-muted-foreground">
+                          Reason: {trip.hold_reason.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Calculation Breakdown */}
