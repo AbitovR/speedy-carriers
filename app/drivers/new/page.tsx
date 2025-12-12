@@ -38,7 +38,7 @@ export default function NewDriverPage() {
       return
     }
 
-    const { error } = await supabase.from('drivers').insert([
+    const { error } = await (supabase as any).from('drivers').insert([
       {
         ...formData,
         user_id: user.id,

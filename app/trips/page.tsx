@@ -7,6 +7,9 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import { FileText, Calendar, User, DollarSign, CreditCard, AlertCircle } from 'lucide-react'
 import TripsFilter from '@/components/trips-filter'
 import { Suspense } from 'react'
+import { Database } from '@/lib/supabase/database.types'
+
+type Trip = Database['public']['Tables']['trips']['Row']
 
 interface TripsPageProps {
   searchParams?: Promise<{ driver?: string }> | { driver?: string }
@@ -59,13 +62,16 @@ export default async function TripsPage({ searchParams }: TripsPageProps) {
 
   // Handle error case - ensure trips is an empty array if null/undefined
   const safeTrips = trips || []
+  
+  // Type assertion for TypeScript
+  const typedTrips: Trip[] = safeTrips as Trip[]
 
   // Calculate stats for filtered trips (filtering happens in the query)
-  const filteredTrips = safeTrips
-  const totalTrips = filteredTrips.length || 0
-  const totalRevenue = filteredTrips.reduce((sum, trip) => sum + Number(trip.total_invoice || 0), 0) || 0
-  const totalDriverEarnings = filteredTrips.reduce((sum, trip) => sum + Number(trip.driver_earnings || 0), 0) || 0
-  const totalCompanyEarnings = filteredTrips.reduce((sum, trip) => sum + Number(trip.company_earnings || 0), 0) || 0
+  const filteredTrips = typedTrips
+  const totalTrips = filteredTrips.length
+  const totalRevenue = filteredTrips.reduce((sum, trip) => sum + Number(trip.total_invoice || 0), 0)
+  const totalDriverEarnings = filteredTrips.reduce((sum, trip) => sum + Number(trip.driver_earnings || 0), 0)
+  const totalCompanyEarnings = filteredTrips.reduce((sum, trip) => sum + Number(trip.company_earnings || 0), 0)
 
   return (
     <div className="space-y-6">
@@ -155,9 +161,9 @@ export default async function TripsPage({ searchParams }: TripsPageProps) {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold">{trip.trip_name}</h3>
                         <Badge variant="secondary">{trip.total_loads} loads</Badge>
-                        {trip.drivers && (
+                        {(trip as any).drivers && (
                           <Badge variant="outline">
-                            {trip.drivers?.driver_type === 'company_driver' ? 'Company Driver' : 'Owner Operator'}
+                            {(trip as any).drivers?.driver_type === 'company_driver' ? 'Company Driver' : 'Owner Operator'}
                           </Badge>
                         )}
                         {trip.payment_status === 'paid_in_full' && (
@@ -176,7 +182,7 @@ export default async function TripsPage({ searchParams }: TripsPageProps) {
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <User className="h-4 w-4" />
-                          {trip.drivers?.name || 'Unknown Driver'}
+                          {(trip as any).drivers?.name || 'Unknown Driver'}
                         </div>
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />

@@ -79,7 +79,7 @@ export default function TripPaymentStatus({
         updateData.hold_reason = null
       }
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('trips')
         .update(updateData)
         .eq('id', tripId)

@@ -21,7 +21,7 @@ export default function TripDetailsPage() {
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/3c98a534-df79-472e-90e9-e6b096ba1309',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/trips/[id]/page.tsx:18',message:'fetchTrip entry',data:{tripId:id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
       // #endregion
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('trips')
         .select(`
           *,

@@ -2,6 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import EnhancedDashboard from '@/components/enhanced-dashboard'
 import { writeFile, appendFile } from 'fs/promises'
 import { join } from 'path'
+import { Database } from '@/lib/supabase/database.types'
+
+type Trip = Database['public']['Tables']['trips']['Row']
+type Driver = Database['public']['Tables']['drivers']['Row']
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -33,12 +37,16 @@ export default async function DashboardPage() {
     console.error('Error fetching trips:', tripsError)
   }
 
+  // Type assertions for TypeScript
+  const typedTrips: Trip[] = (allTrips || []) as Trip[]
+  const typedDrivers: Driver[] = (drivers || []) as Driver[]
+
   // Calculate stats
-  const totalDrivers = drivers?.length || 0
-  const totalTrips = allTrips?.length || 0
-  const totalRevenue = allTrips?.reduce((sum, trip) => sum + (trip.total_invoice || 0), 0) || 0
-  const totalEarnings = allTrips?.reduce((sum, trip) => sum + (trip.company_earnings || 0), 0) || 0
-  const driverEarnings = allTrips?.reduce((sum, trip) => sum + (trip.driver_earnings || 0), 0) || 0
+  const totalDrivers = typedDrivers.length
+  const totalTrips = typedTrips.length
+  const totalRevenue = typedTrips.reduce((sum, trip) => sum + (trip.total_invoice || 0), 0)
+  const totalEarnings = typedTrips.reduce((sum, trip) => sum + (trip.company_earnings || 0), 0)
+  const driverEarnings = typedTrips.reduce((sum, trip) => sum + (trip.driver_earnings || 0), 0)
 
   // Calculate monthly data for charts
   const monthlyData = []
@@ -50,10 +58,10 @@ export default async function DashboardPage() {
     const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1)
     const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0)
 
-    const monthTrips = allTrips?.filter(trip => {
+    const monthTrips = typedTrips.filter(trip => {
       const tripDate = new Date(trip.trip_date)
       return tripDate >= monthStart && tripDate <= monthEnd
-    }) || []
+    })
 
     const revenue = monthTrips.reduce((sum, trip) => sum + (trip.total_invoice || 0), 0)
     const expenses = monthTrips.reduce((sum, trip) => sum + (trip.driver_earnings || 0), 0)
@@ -69,20 +77,20 @@ export default async function DashboardPage() {
 
   // Calculate revenue breakdown by driver type
   // #region agent log
-  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/dashboard/page.tsx:60',message:'Before filtering trips by driver type',data:{driversIsNull:!drivers,driversLength:drivers?.length,allTripsIsNull:!allTrips,allTripsLength:allTrips?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');}catch(e){}
+  try{await appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/dashboard/page.tsx:60',message:'Before filtering trips by driver type',data:{driversIsNull:!typedDrivers,driversLength:typedDrivers?.length,allTripsIsNull:!typedTrips,allTripsLength:typedTrips?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n');}catch(e){}
   // #endregion
-  const companyDriverRevenue = allTrips?.filter(trip => {
-    const driver = drivers?.find(d => d.id === trip.driver_id)
+  const companyDriverRevenue = typedTrips.filter(trip => {
+    const driver = typedDrivers.find(d => d.id === trip.driver_id)
     // #region agent log
     appendFile(join(process.cwd(),'.cursor','debug.log'),JSON.stringify({location:'app/dashboard/page.tsx:64',message:'Driver lookup in filter',data:{tripId:trip?.id,driverId:trip?.driver_id,driverFound:!!driver,driverType:driver?.driver_type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})+'\n').catch(()=>{});
     // #endregion
     return driver?.driver_type === 'company_driver'
-  }).reduce((sum, trip) => sum + (trip.total_invoice || 0), 0) || 0
+  }).reduce((sum, trip) => sum + (trip.total_invoice || 0), 0)
 
-  const ownerOperatorRevenue = allTrips?.filter(trip => {
-    const driver = drivers?.find(d => d.id === trip.driver_id)
+  const ownerOperatorRevenue = typedTrips.filter(trip => {
+    const driver = typedDrivers.find(d => d.id === trip.driver_id)
     return driver?.driver_type === 'owner_operator'
-  }).reduce((sum, trip) => sum + (trip.total_invoice || 0), 0) || 0
+  }).reduce((sum, trip) => sum + (trip.total_invoice || 0), 0)
 
   const revenueBreakdown = [
     { category: 'Owner Operators', value: ownerOperatorRevenue, color: '#3b82f6' },
@@ -99,8 +107,8 @@ export default async function DashboardPage() {
     driverEarnings,
     monthlyData,
     revenueBreakdown,
-    allTrips: allTrips || [],
-    drivers: drivers || [],
+    allTrips: typedTrips,
+    drivers: typedDrivers,
   }
 
   return <EnhancedDashboard data={dashboardData} />

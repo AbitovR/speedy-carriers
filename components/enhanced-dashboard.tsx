@@ -58,7 +58,7 @@ interface Trip {
 
 interface Driver {
   id: string
-  driver_type: 'company_driver' | 'owner_operator'
+  driver_type: string
 }
 
 interface DashboardData {

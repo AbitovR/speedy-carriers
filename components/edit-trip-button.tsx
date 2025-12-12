@@ -72,7 +72,7 @@ export default function EditTripButton({
       const supabase = createClient()
 
       // Get current trip data to recalculate
-      const { data: tripData, error: tripError } = await supabase
+      const { data: tripData, error: tripError } = await (supabase as any)
         .from('trips')
         .select('*, loads(*)')
         .eq('id', tripId)
@@ -83,7 +83,7 @@ export default function EditTripButton({
       }
 
       // Convert loads to the format expected by calculateTripSummary
-      const loads = (tripData.loads || []).map((load: any) => ({
+      const loads = ((tripData as any).loads || []).map((load: any) => ({
         loadId: load.load_id || '',
         customer: load.customer || '',
         vehicle: load.vehicle || '',
@@ -96,7 +96,7 @@ export default function EditTripButton({
       const summary = calculateTripSummary(loads, driverType, expenses)
 
       // Update trip
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (supabase as any)
         .from('trips')
         .update({
           trip_name: tripName,
@@ -114,7 +114,7 @@ export default function EditTripButton({
       if (updateError) throw updateError
 
       // Delete existing expenses
-      await supabase.from('expenses').delete().eq('trip_id', tripId)
+      await (supabase as any).from('expenses').delete().eq('trip_id', tripId)
 
       // Insert updated expenses
       const expensesToInsert = []
@@ -131,7 +131,7 @@ export default function EditTripButton({
       if (expenses.paidInAdvance > 0) expensesToInsert.push({ trip_id: tripId, category: 'paid_in_advance', amount: expenses.paidInAdvance })
 
       if (expensesToInsert.length > 0) {
-        const { error: expensesError } = await supabase.from('expenses').insert(expensesToInsert)
+        const { error: expensesError } = await (supabase as any).from('expenses').insert(expensesToInsert)
         if (expensesError) throw expensesError
       }
 

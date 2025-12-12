@@ -139,7 +139,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
         .getPublicUrl(filePath)
 
       // Insert trip
-      const { data: tripData, error: tripError } = await supabase
+      const { data: tripData, error: tripError } = await (supabase as any)
         .from('trips')
         .insert([
           {
@@ -177,7 +177,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
         notes: load.notes || null,
       }))
 
-      const { error: loadsError } = await supabase.from('loads').insert(loadsToInsert)
+      const { error: loadsError } = await (supabase as any).from('loads').insert(loadsToInsert)
 
       if (loadsError) throw loadsError
 
@@ -196,7 +196,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
       if (expenses.paidInAdvance > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'paid_in_advance', amount: expenses.paidInAdvance })
 
       if (expensesToInsert.length > 0) {
-        await supabase.from('expenses').insert(expensesToInsert)
+        await (supabase as any).from('expenses').insert(expensesToInsert)
       }
 
       setMessage({ type: 'success', text: 'Trip uploaded successfully!' })

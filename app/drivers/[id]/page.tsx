@@ -5,6 +5,10 @@ import { ArrowLeft, Upload, Edit, FileText } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import TripUploadButton from '@/components/trip-upload-button'
 import DeleteTripButton from '@/components/delete-trip-button'
+import { Database } from '@/lib/supabase/database.types'
+
+type Trip = Database['public']['Tables']['trips']['Row']
+type Driver = Database['public']['Tables']['drivers']['Row']
 
 export default async function DriverProfilePage({
   params,
@@ -34,6 +38,9 @@ export default async function DriverProfilePage({
     notFound()
   }
 
+  // Type assertion for TypeScript
+  const typedDriver = driver as Driver
+
   // Fetch trips for this driver
   const { data: trips } = await supabase
     .from('trips')
@@ -41,11 +48,14 @@ export default async function DriverProfilePage({
     .eq('driver_id', id)
     .order('trip_date', { ascending: false })
 
+  // Type assertion for TypeScript
+  const typedTrips: Trip[] = (trips || []) as Trip[]
+
   // Calculate stats
-  const totalTrips = trips?.length || 0
-  const totalRevenue = trips?.reduce((sum, trip) => sum + trip.total_invoice, 0) || 0
-  const totalEarnings = trips?.reduce((sum, trip) => sum + trip.driver_earnings, 0) || 0
-  const totalLoads = trips?.reduce((sum, trip) => sum + trip.total_loads, 0) || 0
+  const totalTrips = typedTrips.length
+  const totalRevenue = typedTrips.reduce((sum, trip) => sum + (trip.total_invoice || 0), 0)
+  const totalEarnings = typedTrips.reduce((sum, trip) => sum + (trip.driver_earnings || 0), 0)
+  const totalLoads = typedTrips.reduce((sum, trip) => sum + (trip.total_loads || 0), 0)
 
   return (
     <div className="space-y-6">
@@ -61,9 +71,9 @@ export default async function DriverProfilePage({
       <div className="bg-card rounded-lg shadow p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">{driver.name}</h1>
+            <h1 className="text-3xl font-bold text-foreground">{typedDriver.name}</h1>
             <p className="text-muted-foreground mt-1">
-              {driver.driver_type === 'company_driver'
+              {typedDriver.driver_type === 'company_driver'
                 ? 'Company Driver (32%)'
                 : 'Owner Operator (100% after 10% dispatch fee)'}
             </p>
@@ -71,12 +81,12 @@ export default async function DriverProfilePage({
           <div className="flex gap-2">
             <span
               className={`px-4 py-2 rounded-full text-sm font-medium ${
-                driver.status === 'active'
+                typedDriver.status === 'active'
                   ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                   : 'bg-muted text-foreground'
               }`}
             >
-              {driver.status}
+              {typedDriver.status}
             </span>
             <Link
               href={`/drivers/${id}/edit`}
@@ -89,22 +99,22 @@ export default async function DriverProfilePage({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          {driver.email && (
+          {typedDriver.email && (
             <div>
               <p className="text-muted-foreground">Email</p>
-              <p className="font-medium text-foreground">{driver.email}</p>
+              <p className="font-medium text-foreground">{typedDriver.email}</p>
             </div>
           )}
-          {driver.phone && (
+          {typedDriver.phone && (
             <div>
               <p className="text-muted-foreground">Phone</p>
-              <p className="font-medium text-foreground">{driver.phone}</p>
+              <p className="font-medium text-foreground">{typedDriver.phone}</p>
             </div>
           )}
-          {driver.license_number && (
+          {typedDriver.license_number && (
             <div>
               <p className="text-muted-foreground">License</p>
-              <p className="font-medium text-foreground">{driver.license_number}</p>
+              <p className="font-medium text-foreground">{typedDriver.license_number}</p>
             </div>
           )}
         </div>
@@ -138,7 +148,7 @@ export default async function DriverProfilePage({
       <div className="bg-card rounded-lg shadow">
         <div className="px-6 py-4 border-b border flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">Trip History</h2>
-          <TripUploadButton driverId={id} driverType={driver.driver_type} />
+          <TripUploadButton driverId={id} driverType={typedDriver.driver_type as 'company_driver' | 'owner_operator'} />
         </div>
 
         <div className="overflow-x-auto">
@@ -167,7 +177,7 @@ export default async function DriverProfilePage({
                 </tr>
               </thead>
               <tbody className="bg-card divide-y divide-border">
-                {trips.map((trip) => (
+                {typedTrips.map((trip) => (
                   <tr key={trip.id} className="hover:bg-accent">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                       {trip.trip_name}
@@ -209,7 +219,7 @@ export default async function DriverProfilePage({
               <p className="text-muted-foreground mb-6">
                 Upload a trip file to get started
               </p>
-              <TripUploadButton driverId={id} driverType={driver.driver_type} />
+              <TripUploadButton driverId={id} driverType={typedDriver.driver_type as 'company_driver' | 'owner_operator'} />
             </div>
           )}
         </div>

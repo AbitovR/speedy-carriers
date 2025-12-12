@@ -5,6 +5,10 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { Database } from '@/lib/supabase/database.types'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+type Driver = Database['public']['Tables']['drivers']['Row']
 
 export default function EditDriverPage() {
   const router = useRouter()
@@ -35,13 +39,14 @@ export default function EditDriverPage() {
         alert('Failed to load driver')
         router.push('/drivers')
       } else {
+        const typedData = data as Driver
         setDriver({
-          name: data.name,
-          driver_type: data.driver_type,
-          email: data.email || '',
-          phone: data.phone || '',
-          license_number: data.license_number || '',
-          status: data.status,
+          name: typedData.name,
+          driver_type: typedData.driver_type,
+          email: typedData.email || '',
+          phone: typedData.phone || '',
+          license_number: typedData.license_number || '',
+          status: typedData.status,
         })
       }
       setLoading(false)
@@ -56,18 +61,19 @@ export default function EditDriverPage() {
     setSaving(true)
 
     try {
-      const { error } = await supabase
+      const updateData = {
+        name: driver.name,
+        driver_type: driver.driver_type,
+        email: driver.email || null,
+        phone: driver.phone || null,
+        license_number: driver.license_number || null,
+        status: driver.status,
+        updated_at: new Date().toISOString(),
+      }
+      const { error } = await ((supabase as any)
         .from('drivers')
-        .update({
-          name: driver.name,
-          driver_type: driver.driver_type,
-          email: driver.email || null,
-          phone: driver.phone || null,
-          license_number: driver.license_number || null,
-          status: driver.status,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
+        .update(updateData)
+        .eq('id', id))
 
       if (error) {
         console.error('Error updating driver:', error)
