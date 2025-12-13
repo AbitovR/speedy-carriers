@@ -83,9 +83,12 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
         ? paymentAmount + additionalMoneyAmount 
         : 0
       
-      // Driver earnings after dispatch fee, minus cash collected
-      // If cash collected exceeds gross after dispatch fee, driver owes the difference (negative earnings)
-      const driverEarnings = grossAfterDispatchFee - totalCashCollected
+      // Driver earnings calculation:
+      // - If cash payment: Gross After Dispatch Fee - Additional Money (additional money is advance payment)
+      // - If other payment methods: Gross After Dispatch Fee
+      const driverEarnings = formData.paymentMethod === 'cash'
+        ? grossAfterDispatchFee - additionalMoneyAmount
+        : grossAfterDispatchFee
       const companyEarnings = dispatchFeeAmount
 
       // Create trip for local driver order
@@ -388,7 +391,10 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                     const totalCashCollected = formData.paymentMethod === 'cash' 
                       ? paymentAmount + additionalMoneyAmount 
                       : 0
-                    const driverEarnings = grossAfterDispatch - totalCashCollected
+                    // Driver earnings = Gross After Dispatch Fee - Additional Money (when cash payment)
+                    const driverEarnings = formData.paymentMethod === 'cash'
+                      ? grossAfterDispatch - additionalMoneyAmount
+                      : grossAfterDispatch
                     
                     return (
                       <div className="bg-muted p-4 rounded-md space-y-2">
@@ -417,10 +423,10 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                           <span className="text-muted-foreground">Gross After Dispatch Fee:</span>
                           <span className="font-medium text-foreground">${grossAfterDispatch.toFixed(2)}</span>
                         </div>
-                        {formData.paymentMethod === 'cash' && (
+                        {formData.paymentMethod === 'cash' && additionalMoneyAmount > 0 && (
                           <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Cash Collected (deducted):</span>
-                            <span className="font-medium text-foreground">-${totalCashCollected.toFixed(2)}</span>
+                            <span className="text-muted-foreground">Additional Money (deducted):</span>
+                            <span className="font-medium text-foreground">-${additionalMoneyAmount.toFixed(2)}</span>
                           </div>
                         )}
                         <div className="flex justify-between text-sm pt-2 border-t border-border">
@@ -433,12 +439,14 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                           <p className="text-xs text-muted-foreground mt-2">
                             {driverEarnings < 0 ? (
                               <>
-                                💵 Driver collected ${totalCashCollected.toFixed(2)} in cash but only earned ${grossAfterDispatch.toFixed(2)}. 
+                                💵 Driver received ${additionalMoneyAmount.toFixed(2)} in advance but only earned ${grossAfterDispatch.toFixed(2)}. 
                                 Driver owes company ${Math.abs(driverEarnings).toFixed(2)}.
                               </>
                             ) : (
                               <>
-                                💵 Total cash collected (${totalCashCollected.toFixed(2)}) goes directly to driver. Company owes ${driverEarnings.toFixed(2)}.
+                                💵 Payment amount (${paymentAmount.toFixed(2)}) goes directly to driver. 
+                                {additionalMoneyAmount > 0 && ` Additional money ($${additionalMoneyAmount.toFixed(2)}) was deducted.`}
+                                {driverEarnings > 0 && ` Company owes ${driverEarnings.toFixed(2)}.`}
                               </>
                             )}
                           </p>
