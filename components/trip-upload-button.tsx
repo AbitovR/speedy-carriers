@@ -35,6 +35,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
     superDispatch: 0,
     other: 0,
     paidInAdvance: 0,
+    cashCollectedByLocalDriver: 0,
   })
   const [otherExpenseComment, setOtherExpenseComment] = useState('')
 
@@ -202,6 +203,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
         notes: otherExpenseComment.trim() || null
       })
       if (expenses.paidInAdvance > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'paid_in_advance', amount: expenses.paidInAdvance })
+      if (expenses.cashCollectedByLocalDriver > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'cash_collected_by_local_driver', amount: expenses.cashCollectedByLocalDriver })
 
       if (expensesToInsert.length > 0) {
         await (supabase as any).from('expenses').insert(expensesToInsert)
@@ -225,6 +227,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
         superDispatch: 0,
         other: 0,
         paidInAdvance: 0,
+        cashCollectedByLocalDriver: 0,
       })
       setOtherExpenseComment('')
       setTimeout(() => {
@@ -480,6 +483,24 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                         }
                         className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Cash Collected by Local Driver
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={expenses.cashCollectedByLocalDriver}
+                        onChange={(e) =>
+                          setExpenses({ ...expenses, cashCollectedByLocalDriver: parseFloat(e.target.value) || 0 })
+                        }
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        This amount is excluded from owner&apos;s net earnings but included in total revenue
+                      </p>
                     </div>
                     <div className="col-span-2">
                       <label className="block text-sm font-medium text-foreground mb-2">
