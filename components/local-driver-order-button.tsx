@@ -24,6 +24,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
     dropoffLocation: '' as typeof LOCATIONS[number] | '',
     payment: '',
     paymentMethod: 'billing' as 'cash' | 'check' | 'billing',
+    additionalMoney: '', // Additional money when cash is selected
     tripDate: new Date().toISOString().split('T')[0],
     weeklyStatement: false,
   })
@@ -68,15 +69,22 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
 
       // Calculate trip summary for local driver
       // Local drivers: 10% dispatch fee applies, they get 100% after dispatch fee
-      // If payment method is cash, deduct cash amount from driver earnings
+      // If payment method is cash, deduct cash amount (payment + additional money) from driver earnings
       const DISPATCH_FEE = 0.10
       const totalInvoice = paymentAmount
       const dispatchFeeAmount = totalInvoice * DISPATCH_FEE
       const grossAfterDispatchFee = totalInvoice - dispatchFeeAmount
       
-      // If cash payment, deduct cash amount from driver earnings (cash goes directly to driver)
-      const cashAmount = formData.paymentMethod === 'cash' ? paymentAmount : 0
-      const driverEarnings = Math.max(0, grossAfterDispatchFee - cashAmount)
+      // If cash payment, calculate total cash collected (payment + additional money)
+      const additionalMoneyAmount = formData.paymentMethod === 'cash' && formData.additionalMoney 
+        ? parseFloat(formData.additionalMoney) || 0 
+        : 0
+      const totalCashCollected = formData.paymentMethod === 'cash' 
+        ? paymentAmount + additionalMoneyAmount 
+        : 0
+      
+      // Driver earnings after dispatch fee, minus cash collected
+      const driverEarnings = Math.max(0, grossAfterDispatchFee - totalCashCollected)
       const companyEarnings = dispatchFeeAmount
 
       // Create trip for local driver order
@@ -108,7 +116,14 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
       if (tripError) throw tripError
 
       // Create a load for this order
-      const loadNotes = `Pickup: ${formData.pickupLocation}, Dropoff: ${formData.dropoffLocation}${formData.weeklyStatement ? ' | Include in weekly statement' : ''}`
+      let loadNotes = `Pickup: ${formData.pickupLocation}, Dropoff: ${formData.dropoffLocation}`
+      if (formData.paymentMethod === 'cash' && additionalMoneyAmount > 0) {
+        loadNotes += ` | Additional Cash: $${additionalMoneyAmount.toFixed(2)} | Total Cash Collected: $${totalCashCollected.toFixed(2)}`
+      }
+      if (formData.weeklyStatement) {
+        loadNotes += ' | Include in weekly statement'
+      }
+      
       const { error: loadError } = await (supabase as any).from('loads').insert([
         {
           trip_id: tripData.id,
@@ -145,6 +160,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
         dropoffLocation: '' as typeof LOCATIONS[number] | '',
         payment: '',
         paymentMethod: 'billing' as 'cash' | 'check' | 'billing',
+        additionalMoney: '',
         tripDate: new Date().toISOString().split('T')[0],
         weeklyStatement: false,
       })
@@ -299,7 +315,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                       id="paymentMethod"
                       required
                       value={formData.paymentMethod}
-                      onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as 'cash' | 'check' | 'billing' })}
+                      onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as 'cash' | 'check' | 'billing', additionalMoney: e.target.value !== 'cash' ? '' : formData.additionalMoney })}
                       className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                     >
                       <option value="billing">Billing</option>
@@ -312,6 +328,27 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                         : 'Company will collect and pay to driver'}
                     </p>
                   </div>
+
+                  {formData.paymentMethod === 'cash' && (
+                    <div>
+                      <label htmlFor="additionalMoney" className="block text-sm font-medium text-foreground mb-2">
+                        Additional Money (Cash)
+                      </label>
+                      <input
+                        id="additionalMoney"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.additionalMoney}
+                        onChange={(e) => setFormData({ ...formData, additionalMoney: e.target.value })}
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                        placeholder="0.00"
+                      />
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Additional cash amount collected. Total cash = Payment Amount + Additional Money
+                      </p>
+                    </div>
+                  )}
 
                   <div>
                     <label htmlFor="tripDate" className="block text-sm font-medium text-foreground mb-2">
@@ -344,8 +381,13 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                     const paymentAmount = parseFloat(formData.payment)
                     const dispatchFee = paymentAmount * 0.1
                     const grossAfterDispatch = paymentAmount - dispatchFee
-                    const cashAmount = formData.paymentMethod === 'cash' ? paymentAmount : 0
-                    const driverEarnings = Math.max(0, grossAfterDispatch - cashAmount)
+                    const additionalMoneyAmount = formData.paymentMethod === 'cash' && formData.additionalMoney 
+                      ? (parseFloat(formData.additionalMoney) || 0) 
+                      : 0
+                    const totalCashCollected = formData.paymentMethod === 'cash' 
+                      ? paymentAmount + additionalMoneyAmount 
+                      : 0
+                    const driverEarnings = Math.max(0, grossAfterDispatch - totalCashCollected)
                     
                     return (
                       <div className="bg-muted p-4 rounded-md space-y-2">
@@ -354,6 +396,18 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                           <span className="text-muted-foreground">Total Payment:</span>
                           <span className="font-medium text-foreground">${paymentAmount.toFixed(2)}</span>
                         </div>
+                        {formData.paymentMethod === 'cash' && additionalMoneyAmount > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Additional Money (Cash):</span>
+                            <span className="font-medium text-foreground">+${additionalMoneyAmount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {formData.paymentMethod === 'cash' && (
+                          <div className="flex justify-between text-sm font-medium">
+                            <span className="text-foreground">Total Cash Collected:</span>
+                            <span className="text-foreground">${totalCashCollected.toFixed(2)}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Dispatch Fee (10%):</span>
                           <span className="font-medium text-foreground">-${dispatchFee.toFixed(2)}</span>
@@ -365,7 +419,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                         {formData.paymentMethod === 'cash' && (
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Cash Collected (deducted):</span>
-                            <span className="font-medium text-foreground">-${cashAmount.toFixed(2)}</span>
+                            <span className="font-medium text-foreground">-${totalCashCollected.toFixed(2)}</span>
                           </div>
                         )}
                         <div className="flex justify-between text-sm pt-2 border-t border-border">
@@ -374,7 +428,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                         </div>
                         {formData.paymentMethod === 'cash' && (
                           <p className="text-xs text-muted-foreground mt-2">
-                            💵 Cash amount (${cashAmount.toFixed(2)}) goes directly to driver. Company owes ${driverEarnings.toFixed(2)}.
+                            💵 Total cash collected (${totalCashCollected.toFixed(2)}) goes directly to driver. Company owes ${driverEarnings.toFixed(2)}.
                           </p>
                         )}
                       </div>
