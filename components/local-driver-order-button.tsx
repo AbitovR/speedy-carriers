@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -12,11 +12,20 @@ interface LocalDriverOrderButtonProps {
 
 const LOCATIONS = ['Yard', 'New York', 'Connecticut', 'New Jersey'] as const
 
+interface Trip {
+  id: string
+  trip_name: string
+  trip_date: string
+  total_loads: number
+}
+
 export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderButtonProps) {
   const router = useRouter()
   const [showPanel, setShowPanel] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null)
+  const [existingTrips, setExistingTrips] = useState<Trip[]>([])
+  const [loadingTrips, setLoadingTrips] = useState(false)
 
   const [formData, setFormData] = useState({
     orderNumber: '',
@@ -26,8 +35,38 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
     paymentMethod: 'billing' as 'cash' | 'check' | 'billing',
     additionalMoney: '', // Additional money when cash is selected
     tripDate: new Date().toISOString().split('T')[0],
+    tripId: 'new' as string | 'new', // 'new' for new trip, or existing trip ID
+    newTripName: '', // Name for new trip
     weeklyStatement: false,
   })
+
+  // Fetch existing trips when panel opens
+  useEffect(() => {
+    if (showPanel) {
+      fetchExistingTrips()
+    }
+  }, [showPanel, driverId])
+
+  const fetchExistingTrips = async () => {
+    setLoadingTrips(true)
+    try {
+      const supabase = createClient()
+      const { data, error } = await (supabase as any)
+        .from('trips')
+        .select('id, trip_name, trip_date, total_loads')
+        .eq('driver_id', driverId)
+        .eq('is_local_driver_order', true)
+        .order('trip_date', { ascending: false })
+        .limit(20)
+
+      if (error) throw error
+      setExistingTrips(data || [])
+    } catch (error) {
+      console.error('Error fetching trips:', error)
+    } finally {
+      setLoadingTrips(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,35 +128,103 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
       const driverEarnings = formData.paymentMethod === 'cash'
         ? grossAfterDispatchFee - additionalMoneyAmount
         : grossAfterDispatchFee
-      const companyEarnings = dispatchFeeAmount
 
-      // Create trip for local driver order
-      const { data: tripData, error: tripError } = await (supabase as any)
-        .from('trips')
-        .insert([
+      let tripData: any
+
+      // Check if adding to existing trip or creating new one
+      if (formData.tripId && formData.tripId !== 'new') {
+        // Add to existing trip
+        tripData = { id: formData.tripId }
+        
+        // Fetch existing loads to recalculate totals
+        const { data: existingLoads, error: loadsError } = await (supabase as any)
+          .from('loads')
+          .select('*')
+          .eq('trip_id', formData.tripId)
+
+        if (loadsError) throw loadsError
+
+        // Calculate totals from all loads (existing + new)
+        let totalInvoiceAll = totalInvoice
+        let totalDriverEarningsAll = driverEarnings
+        let totalCompanyEarningsAll = dispatchFeeAmount
+
+        existingLoads?.forEach((load: any) => {
+          const loadPrice = Number(load.price) || 0
+          const loadDispatchFee = loadPrice * DISPATCH_FEE
+          const loadGrossAfterDispatch = loadPrice - loadDispatchFee
+          
+          // Parse additional money from load notes if cash payment
+          const loadNotes = load.notes || ''
+          const loadAdditionalMoneyMatch = loadNotes.match(/Additional Cash: \$([\d.]+)/)
+          const loadAdditionalMoney = (load.payment_method === 'cash' && loadAdditionalMoneyMatch) 
+            ? parseFloat(loadAdditionalMoneyMatch[1]) 
+            : 0
+          
+          const loadDriverEarnings = load.payment_method === 'cash'
+            ? loadGrossAfterDispatch - loadAdditionalMoney
+            : loadGrossAfterDispatch
+
+          totalInvoiceAll += loadPrice
+          totalDriverEarningsAll += loadDriverEarnings
+          totalCompanyEarningsAll += loadDispatchFee
+        })
+
+        // Update trip totals
+        const { error: updateError } = await (supabase as any)
+          .from('trips')
+          .update({
+            total_loads: (existingLoads?.length || 0) + 1,
+            total_invoice: totalInvoiceAll,
+            driver_earnings: totalDriverEarningsAll,
+            company_earnings: totalCompanyEarningsAll,
+            expenses_total: totalCompanyEarningsAll,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', formData.tripId)
+
+        if (updateError) throw updateError
+      } else {
+        // Create new trip
+        const tripName = formData.newTripName.trim() || `Trip ${new Date().toLocaleDateString()}`
+        
+        const { data: newTripData, error: tripError } = await (supabase as any)
+          .from('trips')
+          .insert([
+            {
+              driver_id: driverId,
+              user_id: user.id,
+              trip_name: tripName,
+              trip_date: formData.tripDate,
+              file_name: null,
+              file_url: null,
+              total_loads: 1,
+              total_invoice: totalInvoice,
+              total_broker_fees: 0,
+              driver_earnings: driverEarnings,
+              company_earnings: dispatchFeeAmount,
+              expenses_total: dispatchFeeAmount,
+              is_local_driver_order: true,
+            },
+          ])
+          .select()
+          .single()
+
+        if (tripError) throw tripError
+        tripData = newTripData
+
+        // Insert dispatch fee as an expense for new trip
+        const { error: expenseError } = await (supabase as any).from('expenses').insert([
           {
-            driver_id: driverId,
-            user_id: user.id,
-            trip_name: `Order ${formData.orderNumber}`,
-            trip_date: formData.tripDate,
-            file_name: null, // Local drivers don't upload files
-            file_url: null,
-            total_loads: 1, // Each order is one load
-            total_invoice: totalInvoice,
-            total_broker_fees: 0, // No broker fees for local drivers
-            driver_earnings: driverEarnings,
-            company_earnings: companyEarnings,
-            expenses_total: dispatchFeeAmount,
-            pickup_location: formData.pickupLocation,
-            dropoff_location: formData.dropoffLocation,
-            order_number: formData.orderNumber,
-            is_local_driver_order: true,
+            trip_id: tripData.id,
+            category: 'dispatch_fee',
+            amount: dispatchFeeAmount,
+            notes: '10% dispatch fee for local driver order',
           },
         ])
-        .select()
-        .single()
 
-      if (tripError) throw tripError
+        if (expenseError) throw expenseError
+      }
 
       // Create a load for this order
       let loadNotes = `Pickup: ${formData.pickupLocation}, Dropoff: ${formData.dropoffLocation}`
@@ -143,18 +250,6 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
 
       if (loadError) throw loadError
 
-      // Insert dispatch fee as an expense
-      const { error: expenseError } = await (supabase as any).from('expenses').insert([
-        {
-          trip_id: tripData.id,
-          category: 'dispatch_fee',
-          amount: dispatchFeeAmount,
-          notes: '10% dispatch fee for local driver order',
-        },
-      ])
-
-      if (expenseError) throw expenseError
-
       setMessage({ type: 'success', text: 'Order created successfully!' })
       
       // Reset form
@@ -166,8 +261,13 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
         paymentMethod: 'billing' as 'cash' | 'check' | 'billing',
         additionalMoney: '',
         tripDate: new Date().toISOString().split('T')[0],
+        tripId: 'new' as string | 'new',
+        newTripName: '',
         weeklyStatement: false,
       })
+      
+      // Refresh trips list
+      await fetchExistingTrips()
 
       setTimeout(() => {
         setShowPanel(false)
@@ -234,6 +334,49 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
+                    <label htmlFor="tripId" className="block text-sm font-medium text-foreground mb-2">
+                      Add to Trip *
+                    </label>
+                    <select
+                      id="tripId"
+                      required
+                      value={formData.tripId}
+                      onChange={(e) => setFormData({ ...formData, tripId: e.target.value as string | 'new', newTripName: e.target.value === 'new' ? formData.newTripName : '' })}
+                      className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                      disabled={loadingTrips}
+                    >
+                      <option value="new">Create New Trip</option>
+                      {existingTrips.map((trip) => (
+                        <option key={trip.id} value={trip.id}>
+                          {trip.trip_name} ({trip.total_loads} loads) - {new Date(trip.trip_date).toLocaleDateString()}
+                        </option>
+                      ))}
+                    </select>
+                    {loadingTrips && (
+                      <p className="mt-2 text-sm text-muted-foreground">Loading trips...</p>
+                    )}
+                  </div>
+
+                  {formData.tripId === 'new' && (
+                    <div>
+                      <label htmlFor="newTripName" className="block text-sm font-medium text-foreground mb-2">
+                        Trip Name
+                      </label>
+                      <input
+                        id="newTripName"
+                        type="text"
+                        value={formData.newTripName}
+                        onChange={(e) => setFormData({ ...formData, newTripName: e.target.value })}
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                        placeholder={`Trip ${new Date().toLocaleDateString()}`}
+                      />
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        Leave empty to use default name based on date
+                      </p>
+                    </div>
+                  )}
+
                   <div>
                     <label htmlFor="orderNumber" className="block text-sm font-medium text-foreground mb-2">
                       Order Number *
