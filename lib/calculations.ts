@@ -167,17 +167,17 @@ export function calculateTripSummary(
   const checkGrossAfterDeductions = checkGrossBeforeDeductions - checkExpenses
   const billingGrossAfterDeductions = billingGrossBeforeDeductions - billingExpenses
 
-  // Cash collected by local driver (excluded from owner earnings but included in total revenue)
+  // Cash collected by local driver (tracked for reporting only, does not affect calculations)
   const cashCollectedByLocalDriver = expenses.cashCollectedByLocalDriver || 0
   
   // Driver/Owner percentage
   // For regular drivers (32%): calculated from gross AFTER towing and quick pay fee (but before dispatch fee and other expenses)
   // For owner operators (100%): get 100% of remaining after towing, quick pay fee, dispatch fee, and other expenses
-  // BUT: Cash collected by local driver is excluded from owner earnings calculation
+  // Note: Cash collected by local driver is tracked separately and does NOT affect owner earnings
   const percentage = driverType === 'owner_operator' ? 1.0 : 0.32
   const driverPay =
     driverType === 'owner_operator'
-      ? Math.max(0, totalGrossAfterDeductions - cashCollectedByLocalDriver) // Owner operators get 100% of what remains after towing, quick pay fee, dispatch fee, and other expenses, MINUS cash collected by local driver
+      ? totalGrossAfterDeductions // Owner operators get 100% of what remains after towing, quick pay fee, dispatch fee, and other expenses
       : totalGrossAfterQuickPay * percentage // Company drivers get 32% of gross after towing and quick pay fee
 
   return {
