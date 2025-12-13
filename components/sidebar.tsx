@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Users, FileText, Settings, LogOut, X } from 'lucide-react'
+import { Home, Users, FileText, Settings, LogOut, X, CheckSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { ThemeToggle } from './theme-toggle'
 import { useSidebar } from './sidebar-provider'
@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
   { name: 'Drivers', href: '/drivers', icon: Users },
   { name: 'Trips', href: '/trips', icon: FileText },
+  { name: 'To-Do List', href: '/todos', icon: CheckSquare },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
