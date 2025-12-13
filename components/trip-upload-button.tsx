@@ -29,6 +29,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
     fuel: 0,
     ifta: 0,
     localTowing: 0,
+    quickPayFee: 0,
     prepass: 0,
     shipcar: 0,
     superDispatch: 0,
@@ -157,7 +158,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
             company_earnings:
               driverType === 'owner_operator'
                 ? summary.dispatchFeeAmount  // Owner operators: company gets only the 10% dispatch fee
-                : summary.totalGrossAfterTowing - summary.driverPay - summary.dispatchFeeAmount - summary.otherExpenses, // Company drivers: gross after towing minus driver pay, dispatch fee, and other expenses
+                : summary.totalGrossAfterQuickPay - summary.driverPay - summary.dispatchFeeAmount - summary.otherExpenses, // Company drivers: gross after towing and quick pay fee minus driver pay, dispatch fee, and other expenses
             expenses_total: summary.totalExpenses,
           },
         ])
@@ -190,6 +191,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
       if (expenses.fuel > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'fuel', amount: expenses.fuel })
       if (expenses.ifta > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'ifta', amount: expenses.ifta })
       if (expenses.localTowing > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'local_towing', amount: expenses.localTowing })
+      if (expenses.quickPayFee > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'quick_pay_fee', amount: expenses.quickPayFee })
       if (expenses.prepass > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'prepass', amount: expenses.prepass })
       if (expenses.shipcar > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'shipcar', amount: expenses.shipcar })
       if (expenses.superDispatch > 0) expensesToInsert.push({ trip_id: tripData.id, category: 'super_dispatch', amount: expenses.superDispatch })
@@ -217,6 +219,7 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
         fuel: 0,
         ifta: 0,
         localTowing: 0,
+        quickPayFee: 0,
         prepass: 0,
         shipcar: 0,
         superDispatch: 0,
@@ -414,6 +417,21 @@ export default function TripUploadButton({ driverId, driverType }: TripUploadBut
                         value={expenses.localTowing}
                         onChange={(e) =>
                           setExpenses({ ...expenses, localTowing: parseFloat(e.target.value) || 0 })
+                        }
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Quick Pay Fee
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={expenses.quickPayFee}
+                        onChange={(e) =>
+                          setExpenses({ ...expenses, quickPayFee: parseFloat(e.target.value) || 0 })
                         }
                         className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />

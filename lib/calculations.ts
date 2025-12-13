@@ -15,6 +15,7 @@ export interface Expenses {
   fuel: number
   ifta: number
   localTowing: number
+  quickPayFee: number
   prepass: number
   shipcar: number
   superDispatch: number
@@ -27,6 +28,7 @@ export interface TripSummary {
   totalBrokerFee: number
   totalGrossBeforeDeductions: number
   totalGrossAfterTowing: number
+  totalGrossAfterQuickPay: number
   dispatchFeeAmount: number
   otherExpenses: number
   totalExpenses: number
@@ -86,11 +88,15 @@ export function calculateTripSummary(
   const localTowingFee = expenses.localTowing || 0
   const totalGrossAfterTowing = totalGrossBeforeDeductions - localTowingFee
 
-  // Step 2: Calculate dispatch fee from gross AFTER towing
-  // Dispatch fee: Always 10% of gross after towing for both driver types
-  const dispatchFeeAmount = totalGrossAfterTowing * DISPATCH_FEE
+  // Step 2: Deduct quick pay fee AFTER towing fee (if it exists)
+  const quickPayFee = expenses.quickPayFee || 0
+  const totalGrossAfterQuickPay = totalGrossAfterTowing - quickPayFee
 
-  // Step 3: Other expenses (excluding local towing, as it's already deducted)
+  // Step 3: Calculate dispatch fee from gross AFTER towing and quick pay fee
+  // Dispatch fee: Always 10% of gross after towing and quick pay fee for both driver types
+  const dispatchFeeAmount = totalGrossAfterQuickPay * DISPATCH_FEE
+
+  // Step 4: Other expenses (excluding local towing and quick pay fee, as they're already deducted)
   const otherExpenses =
     expenses.parking +
     expenses.eldLogbook +
@@ -103,10 +109,10 @@ export function calculateTripSummary(
     expenses.other +
     expenses.paidInAdvance
 
-  // Step 4: Total expenses (dispatch fee + other expenses + local towing)
-  const totalExpenses = dispatchFeeAmount + otherExpenses + localTowingFee
+  // Step 5: Total expenses (dispatch fee + other expenses + local towing + quick pay fee)
+  const totalExpenses = dispatchFeeAmount + otherExpenses + localTowingFee + quickPayFee
 
-  // Apply local towing fee proportionally to each payment method
+  // Apply local towing fee and quick pay fee proportionally to each payment method
   const cashShare =
     totalGrossBeforeDeductions > 0
       ? cashGrossBeforeDeductions / totalGrossBeforeDeductions
@@ -124,15 +130,24 @@ export function calculateTripSummary(
   const checkTowingFee = localTowingFee * checkShare
   const billingTowingFee = localTowingFee * billingShare
 
+  const cashQuickPayFee = quickPayFee * cashShare
+  const checkQuickPayFee = quickPayFee * checkShare
+  const billingQuickPayFee = quickPayFee * billingShare
+
   // Calculate gross after towing for each payment method
   const cashGrossAfterTowing = cashGrossBeforeDeductions - cashTowingFee
   const checkGrossAfterTowing = checkGrossBeforeDeductions - checkTowingFee
   const billingGrossAfterTowing = billingGrossBeforeDeductions - billingTowingFee
 
-  // Calculate dispatch fee proportionally from gross after towing
-  const cashDispatchFee = cashGrossAfterTowing * DISPATCH_FEE
-  const checkDispatchFee = checkGrossAfterTowing * DISPATCH_FEE
-  const billingDispatchFee = billingGrossAfterTowing * DISPATCH_FEE
+  // Calculate gross after quick pay fee for each payment method
+  const cashGrossAfterQuickPay = cashGrossAfterTowing - cashQuickPayFee
+  const checkGrossAfterQuickPay = checkGrossAfterTowing - checkQuickPayFee
+  const billingGrossAfterQuickPay = billingGrossAfterTowing - billingQuickPayFee
+
+  // Calculate dispatch fee proportionally from gross after towing and quick pay fee
+  const cashDispatchFee = cashGrossAfterQuickPay * DISPATCH_FEE
+  const checkDispatchFee = checkGrossAfterQuickPay * DISPATCH_FEE
+  const billingDispatchFee = billingGrossAfterQuickPay * DISPATCH_FEE
 
   // Calculate other expenses proportionally
   const cashOtherExpenses = otherExpenses * cashShare
@@ -140,9 +155,9 @@ export function calculateTripSummary(
   const billingOtherExpenses = otherExpenses * billingShare
 
   // Total expenses per payment method
-  const cashExpenses = cashTowingFee + cashDispatchFee + cashOtherExpenses
-  const checkExpenses = checkTowingFee + checkDispatchFee + checkOtherExpenses
-  const billingExpenses = billingTowingFee + billingDispatchFee + billingOtherExpenses
+  const cashExpenses = cashTowingFee + cashQuickPayFee + cashDispatchFee + cashOtherExpenses
+  const checkExpenses = checkTowingFee + checkQuickPayFee + checkDispatchFee + checkOtherExpenses
+  const billingExpenses = billingTowingFee + billingQuickPayFee + billingDispatchFee + billingOtherExpenses
 
   // Gross AFTER all deductions
   const totalGrossAfterDeductions = totalGrossBeforeDeductions - totalExpenses
@@ -151,19 +166,20 @@ export function calculateTripSummary(
   const billingGrossAfterDeductions = billingGrossBeforeDeductions - billingExpenses
 
   // Driver/Owner percentage
-  // For regular drivers (32%): calculated from gross AFTER towing (but before dispatch fee and other expenses)
-  // For owner operators (100%): get 100% of remaining after 10% dispatch fee and other expenses
+  // For regular drivers (32%): calculated from gross AFTER towing and quick pay fee (but before dispatch fee and other expenses)
+  // For owner operators (100%): get 100% of remaining after towing, quick pay fee, dispatch fee, and other expenses
   const percentage = driverType === 'owner_operator' ? 1.0 : 0.32
   const driverPay =
     driverType === 'owner_operator'
-      ? totalGrossAfterDeductions // Owner operators get 100% of what remains after towing, dispatch fee, and other expenses
-      : totalGrossAfterTowing * percentage // Company drivers get 32% of gross after towing
+      ? totalGrossAfterDeductions // Owner operators get 100% of what remains after towing, quick pay fee, dispatch fee, and other expenses
+      : totalGrossAfterQuickPay * percentage // Company drivers get 32% of gross after towing and quick pay fee
 
   return {
     totalPrice,
     totalBrokerFee,
     totalGrossBeforeDeductions,
-    totalGrossAfterTowing, // Add this for company earnings calculation
+    totalGrossAfterTowing, // For backward compatibility
+    totalGrossAfterQuickPay, // Gross after towing and quick pay fee
     dispatchFeeAmount,
     otherExpenses,
     totalExpenses,

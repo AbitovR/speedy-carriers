@@ -35,6 +35,7 @@ export default function EditTripButton({
     fuel: 0,
     ifta: 0,
     localTowing: 0,
+    quickPayFee: 0,
     prepass: 0,
     shipcar: 0,
     superDispatch: 0,
@@ -56,6 +57,7 @@ export default function EditTripButton({
         else if (category === 'fuel') expenseMap.fuel = exp.amount
         else if (category === 'ifta') expenseMap.ifta = exp.amount
         else if (category === 'local_towing') expenseMap.localTowing = exp.amount
+        else if (category === 'quick_pay_fee') expenseMap.quickPayFee = exp.amount
         else if (category === 'prepass') expenseMap.prepass = exp.amount
         else if (category === 'shipcar') expenseMap.shipcar = exp.amount
         else if (category === 'super_dispatch') expenseMap.superDispatch = exp.amount
@@ -130,6 +132,7 @@ export default function EditTripButton({
       if (expenses.fuel > 0) expensesToInsert.push({ trip_id: tripId, category: 'fuel', amount: expenses.fuel })
       if (expenses.ifta > 0) expensesToInsert.push({ trip_id: tripId, category: 'ifta', amount: expenses.ifta })
       if (expenses.localTowing > 0) expensesToInsert.push({ trip_id: tripId, category: 'local_towing', amount: expenses.localTowing })
+      if (expenses.quickPayFee > 0) expensesToInsert.push({ trip_id: tripId, category: 'quick_pay_fee', amount: expenses.quickPayFee })
       if (expenses.prepass > 0) expensesToInsert.push({ trip_id: tripId, category: 'prepass', amount: expenses.prepass })
       if (expenses.shipcar > 0) expensesToInsert.push({ trip_id: tripId, category: 'shipcar', amount: expenses.shipcar })
       if (expenses.superDispatch > 0) expensesToInsert.push({ trip_id: tripId, category: 'super_dispatch', amount: expenses.superDispatch })
@@ -322,6 +325,21 @@ export default function EditTripButton({
                         value={expenses.localTowing}
                         onChange={(e) =>
                           setExpenses({ ...expenses, localTowing: parseFloat(e.target.value) || 0 })
+                        }
+                        className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Quick Pay Fee
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={expenses.quickPayFee}
+                        onChange={(e) =>
+                          setExpenses({ ...expenses, quickPayFee: parseFloat(e.target.value) || 0 })
                         }
                         className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       />
