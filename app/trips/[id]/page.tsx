@@ -293,10 +293,18 @@ export default function TripDetailsPage() {
                     ?.filter((e: any) => e?.category !== 'local_towing')
                     .map((expense: any) => {
                       if (!expense) return null
+                      const categoryName = (expense.category || '').replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
                       return (
-                        <div key={expense.id} className="flex justify-between py-1">
-                          <span>- {(expense.category || '').replace('_', ' ')}</span>
-                          <span>-{formatCurrency(Number(expense.amount) || 0)}</span>
+                        <div key={expense.id} className="py-1">
+                          <div className="flex justify-between">
+                            <span>- {categoryName}</span>
+                            <span>-{formatCurrency(Number(expense.amount) || 0)}</span>
+                          </div>
+                          {expense.category === 'other' && expense.notes && (
+                            <div className="text-xs text-muted-foreground mt-1 ml-4 italic">
+                              Note: {expense.notes}
+                            </div>
+                          )}
                         </div>
                       )
                     })}
@@ -405,10 +413,18 @@ export default function TripDetailsPage() {
                   ?.filter((e: any) => e?.category !== 'local_towing')
                   .map((expense: any) => {
                     if (!expense) return null
+                    const categoryName = (expense.category || '').replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
                     return (
-                      <div key={expense.id} className="flex justify-between py-1">
-                        <span>- {(expense.category || '').replace('_', ' ')}</span>
-                        <span>-{formatCurrency(Number(expense.amount) || 0)}</span>
+                      <div key={expense.id} className="py-1">
+                        <div className="flex justify-between">
+                          <span>- {categoryName}</span>
+                          <span>-{formatCurrency(Number(expense.amount) || 0)}</span>
+                        </div>
+                        {expense.category === 'other' && expense.notes && (
+                          <div className="text-xs text-muted-foreground mt-1 ml-4 italic">
+                            Note: {expense.notes}
+                          </div>
+                        )}
                       </div>
                     )
                   })}
