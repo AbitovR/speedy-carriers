@@ -5,6 +5,7 @@ import { ArrowLeft, Upload, Edit, FileText, DollarSign, TrendingUp, Award, Truck
 import { formatCurrency, formatDate } from '@/lib/utils'
 import TripUploadButton from '@/components/trip-upload-button'
 import LocalDriverOrderButton from '@/components/local-driver-order-button'
+import CreateTripFromLoadsButton from '@/components/create-trip-from-loads-button'
 import DeleteTripButton from '@/components/delete-trip-button'
 import { Database } from '@/lib/supabase/database.types'
 
@@ -208,7 +209,10 @@ export default async function DriverProfilePage({
         <div className="px-6 py-4 border-b border flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">Trip History</h2>
           {typedDriver.driver_type === 'local_driver' ? (
-            <LocalDriverOrderButton driverId={id} />
+            <div className="flex items-center gap-2">
+              <LocalDriverOrderButton driverId={id} />
+              <CreateTripFromLoadsButton driverId={id} />
+            </div>
           ) : (
             <TripUploadButton driverId={id} driverType={typedDriver.driver_type as 'company_driver' | 'owner_operator'} />
           )}

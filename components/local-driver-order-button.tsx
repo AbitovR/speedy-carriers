@@ -131,6 +131,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
 
       let tripData: any
 
+      // Create load without trip (trip can be added later)
       // Check if adding to existing trip or creating new one
       if (formData.tripId && formData.tripId !== 'new') {
         // Add to existing trip
@@ -184,7 +185,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
           .eq('id', formData.tripId)
 
         if (updateError) throw updateError
-      } else {
+      } else if (formData.tripId === 'new') {
         // Create new trip
         const tripName = formData.newTripName.trim() || `Trip ${new Date().toLocaleDateString()}`
         
@@ -224,6 +225,9 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
         ])
 
         if (expenseError) throw expenseError
+      } else {
+        // No trip selected - create load without trip
+        tripData = { id: null }
       }
 
       // Create a load for this order
@@ -237,7 +241,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
       
       const { error: loadError } = await (supabase as any).from('loads').insert([
         {
-          trip_id: tripData.id,
+          trip_id: tripData.id || null, // Allow null for loads without trips
           load_id: formData.orderNumber,
           customer: `Local Order - ${formData.pickupLocation} to ${formData.dropoffLocation}`,
           vehicle: 'Local Driver',
@@ -336,16 +340,16 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label htmlFor="tripId" className="block text-sm font-medium text-foreground mb-2">
-                      Add to Trip *
+                      Add to Trip (Optional)
                     </label>
                     <select
                       id="tripId"
-                      required
                       value={formData.tripId}
-                      onChange={(e) => setFormData({ ...formData, tripId: e.target.value as string | 'new', newTripName: e.target.value === 'new' ? formData.newTripName : '' })}
+                      onChange={(e) => setFormData({ ...formData, tripId: e.target.value as string | 'new' | '', newTripName: e.target.value === 'new' ? formData.newTripName : '' })}
                       className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
                       disabled={loadingTrips}
                     >
+                      <option value="">No Trip (Create Later)</option>
                       <option value="new">Create New Trip</option>
                       {existingTrips.map((trip) => (
                         <option key={trip.id} value={trip.id}>
@@ -356,6 +360,9 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                     {loadingTrips && (
                       <p className="mt-2 text-sm text-muted-foreground">Loading trips...</p>
                     )}
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      You can create orders without a trip and add them to a trip later
+                    </p>
                   </div>
 
                   {formData.tripId === 'new' && (
