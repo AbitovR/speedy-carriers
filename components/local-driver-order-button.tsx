@@ -23,6 +23,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
     pickupLocation: '' as typeof LOCATIONS[number] | '',
     dropoffLocation: '' as typeof LOCATIONS[number] | '',
     payment: '',
+    paymentMethod: 'billing' as 'cash' | 'check' | 'billing',
     tripDate: new Date().toISOString().split('T')[0],
     weeklyStatement: false,
   })
@@ -67,10 +68,15 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
 
       // Calculate trip summary for local driver
       // Local drivers: 10% dispatch fee applies, they get 100% after dispatch fee
+      // If payment method is cash, deduct cash amount from driver earnings
       const DISPATCH_FEE = 0.10
       const totalInvoice = paymentAmount
       const dispatchFeeAmount = totalInvoice * DISPATCH_FEE
-      const driverEarnings = totalInvoice - dispatchFeeAmount
+      const grossAfterDispatchFee = totalInvoice - dispatchFeeAmount
+      
+      // If cash payment, deduct cash amount from driver earnings (cash goes directly to driver)
+      const cashAmount = formData.paymentMethod === 'cash' ? paymentAmount : 0
+      const driverEarnings = Math.max(0, grossAfterDispatchFee - cashAmount)
       const companyEarnings = dispatchFeeAmount
 
       // Create trip for local driver order
@@ -111,7 +117,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
           vehicle: 'Local Driver',
           price: totalInvoice,
           broker_fee: 0,
-          payment_method: 'cash', // Default for local drivers
+          payment_method: formData.paymentMethod,
           notes: loadNotes,
         },
       ])
@@ -138,6 +144,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
         pickupLocation: '' as typeof LOCATIONS[number] | '',
         dropoffLocation: '' as typeof LOCATIONS[number] | '',
         payment: '',
+        paymentMethod: 'billing' as 'cash' | 'check' | 'billing',
         tripDate: new Date().toISOString().split('T')[0],
         weeklyStatement: false,
       })
@@ -285,6 +292,28 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                   </div>
 
                   <div>
+                    <label htmlFor="paymentMethod" className="block text-sm font-medium text-foreground mb-2">
+                      Payment Method *
+                    </label>
+                    <select
+                      id="paymentMethod"
+                      required
+                      value={formData.paymentMethod}
+                      onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as 'cash' | 'check' | 'billing' })}
+                      className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
+                    >
+                      <option value="billing">Billing</option>
+                      <option value="check">Check/ACH</option>
+                      <option value="cash">Cash</option>
+                    </select>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {formData.paymentMethod === 'cash' 
+                        ? 'Cash payments will be deducted from driver earnings (cash goes directly to driver)'
+                        : 'Company will collect and pay to driver'}
+                    </p>
+                  </div>
+
+                  <div>
                     <label htmlFor="tripDate" className="block text-sm font-medium text-foreground mb-2">
                       Order Date *
                     </label>
@@ -311,23 +340,46 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                     </label>
                   </div>
 
-                  {formData.payment && !isNaN(parseFloat(formData.payment)) && parseFloat(formData.payment) > 0 && (
-                    <div className="bg-muted p-4 rounded-md space-y-2">
-                      <h3 className="font-semibold text-foreground">Payment Breakdown</h3>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Total Payment:</span>
-                        <span className="font-medium text-foreground">${parseFloat(formData.payment).toFixed(2)}</span>
+                  {formData.payment && !isNaN(parseFloat(formData.payment)) && parseFloat(formData.payment) > 0 && (() => {
+                    const paymentAmount = parseFloat(formData.payment)
+                    const dispatchFee = paymentAmount * 0.1
+                    const grossAfterDispatch = paymentAmount - dispatchFee
+                    const cashAmount = formData.paymentMethod === 'cash' ? paymentAmount : 0
+                    const driverEarnings = Math.max(0, grossAfterDispatch - cashAmount)
+                    
+                    return (
+                      <div className="bg-muted p-4 rounded-md space-y-2">
+                        <h3 className="font-semibold text-foreground">Payment Breakdown</h3>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Total Payment:</span>
+                          <span className="font-medium text-foreground">${paymentAmount.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Dispatch Fee (10%):</span>
+                          <span className="font-medium text-foreground">-${dispatchFee.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Gross After Dispatch Fee:</span>
+                          <span className="font-medium text-foreground">${grossAfterDispatch.toFixed(2)}</span>
+                        </div>
+                        {formData.paymentMethod === 'cash' && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Cash Collected (deducted):</span>
+                            <span className="font-medium text-foreground">-${cashAmount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm pt-2 border-t border-border">
+                          <span className="font-semibold text-foreground">Driver Earnings:</span>
+                          <span className="font-bold text-foreground">${driverEarnings.toFixed(2)}</span>
+                        </div>
+                        {formData.paymentMethod === 'cash' && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            💵 Cash amount (${cashAmount.toFixed(2)}) goes directly to driver. Company owes ${driverEarnings.toFixed(2)}.
+                          </p>
+                        )}
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Dispatch Fee (10%):</span>
-                        <span className="font-medium text-foreground">-${(parseFloat(formData.payment) * 0.1).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm pt-2 border-t border-border">
-                        <span className="font-semibold text-foreground">Driver Earnings:</span>
-                        <span className="font-bold text-foreground">${(parseFloat(formData.payment) * 0.9).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  )}
+                    )
+                  })()}
 
                   <div className="flex gap-4 pt-4">
                     <button
