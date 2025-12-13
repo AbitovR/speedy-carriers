@@ -47,7 +47,7 @@ export default function CreateTripFromLoadsButton({ driverId }: CreateTripFromLo
     try {
       const supabase = createClient()
       
-      // Get all trips for this driver to find loads
+      // Get all trips for this driver
       const { data: trips } = await (supabase as any)
         .from('trips')
         .select('id')
@@ -56,24 +56,31 @@ export default function CreateTripFromLoadsButton({ driverId }: CreateTripFromLo
 
       const tripIds = trips?.map((t: any) => t.id) || []
       
-      // Get loads that don't have a trip_id or have null trip_id
-      const { data: loads, error } = await (supabase as any)
+      // Get loads that don't have a trip_id (are null)
+      // This is simpler - just get loads where trip_id IS NULL
+      let query = (supabase as any)
         .from('loads')
         .select('*')
-        .or(`trip_id.is.null,trip_id.not.in.(${tripIds.length > 0 ? tripIds.join(',') : '00000000-0000-0000-0000-000000000000'})`)
+        .is('trip_id', null)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      const { data: loads, error } = await query
+
+      if (error) {
+        console.error('Error fetching loads:', error)
+        throw error
+      }
       
       // Filter to only loads that match local driver pattern
       const localLoads = (loads || []).filter((load: any) => 
         load.customer?.includes('Local Order') || load.vehicle === 'Local Driver'
       )
       
+      console.log('Available loads found:', localLoads.length, localLoads)
       setAvailableLoads(localLoads || [])
     } catch (error) {
       console.error('Error fetching loads:', error)
-      setMessage({ type: 'error', text: 'Failed to load available orders' })
+      setMessage({ type: 'error', text: `Failed to load available orders: ${error instanceof Error ? error.message : 'Unknown error'}` })
     } finally {
       setLoadingLoads(false)
     }
