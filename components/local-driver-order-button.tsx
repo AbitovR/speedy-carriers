@@ -84,7 +84,8 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
         : 0
       
       // Driver earnings after dispatch fee, minus cash collected
-      const driverEarnings = Math.max(0, grossAfterDispatchFee - totalCashCollected)
+      // If cash collected exceeds gross after dispatch fee, driver owes the difference (negative earnings)
+      const driverEarnings = grossAfterDispatchFee - totalCashCollected
       const companyEarnings = dispatchFeeAmount
 
       // Create trip for local driver order
@@ -387,7 +388,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                     const totalCashCollected = formData.paymentMethod === 'cash' 
                       ? paymentAmount + additionalMoneyAmount 
                       : 0
-                    const driverEarnings = Math.max(0, grossAfterDispatch - totalCashCollected)
+                    const driverEarnings = grossAfterDispatch - totalCashCollected
                     
                     return (
                       <div className="bg-muted p-4 rounded-md space-y-2">
@@ -424,11 +425,22 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
                         )}
                         <div className="flex justify-between text-sm pt-2 border-t border-border">
                           <span className="font-semibold text-foreground">Driver Earnings:</span>
-                          <span className="font-bold text-foreground">${driverEarnings.toFixed(2)}</span>
+                          <span className={`font-bold ${driverEarnings < 0 ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}>
+                            ${driverEarnings.toFixed(2)}
+                          </span>
                         </div>
                         {formData.paymentMethod === 'cash' && (
                           <p className="text-xs text-muted-foreground mt-2">
-                            💵 Total cash collected (${totalCashCollected.toFixed(2)}) goes directly to driver. Company owes ${driverEarnings.toFixed(2)}.
+                            {driverEarnings < 0 ? (
+                              <>
+                                💵 Driver collected ${totalCashCollected.toFixed(2)} in cash but only earned ${grossAfterDispatch.toFixed(2)}. 
+                                Driver owes company ${Math.abs(driverEarnings).toFixed(2)}.
+                              </>
+                            ) : (
+                              <>
+                                💵 Total cash collected (${totalCashCollected.toFixed(2)}) goes directly to driver. Company owes ${driverEarnings.toFixed(2)}.
+                              </>
+                            )}
                           </p>
                         )}
                       </div>
