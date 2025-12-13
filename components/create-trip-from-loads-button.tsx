@@ -226,7 +226,7 @@ export default function CreateTripFromLoadsButton({ driverId }: CreateTripFromLo
         className="inline-flex items-center gap-2 bg-secondary text-foreground px-4 py-2 rounded-md hover:bg-secondary/80 transition-colors"
       >
         <Plus className="h-4 w-4" />
-        Create Trip from Orders
+        Create Trip
       </button>
 
       <AnimatePresence>
@@ -248,7 +248,10 @@ export default function CreateTripFromLoadsButton({ driverId }: CreateTripFromLo
               className="fixed right-0 top-0 h-full w-full max-w-3xl bg-card border-l border-border shadow-2xl z-50 overflow-y-auto"
             >
               <div className="sticky top-0 bg-card border-b border-border p-6 flex items-center justify-between z-10">
-                <h2 className="text-2xl font-bold text-foreground">Create Trip from Orders</h2>
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Create Trip</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Click on orders to add them to your trip</p>
+                </div>
                 <button
                   onClick={() => setShowPanel(false)}
                   className="p-2 hover:bg-muted rounded-md transition-colors"
@@ -304,7 +307,7 @@ export default function CreateTripFromLoadsButton({ driverId }: CreateTripFromLo
 
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">
-                      Select Orders to Add ({selectedLoadIds.size} selected)
+                      Available Orders ({selectedLoadIds.size} selected)
                     </label>
                     {loadingLoads ? (
                       <div className="p-8 text-center text-muted-foreground">Loading orders...</div>
@@ -313,7 +316,7 @@ export default function CreateTripFromLoadsButton({ driverId }: CreateTripFromLo
                         No available orders. Create orders first without selecting a trip.
                       </div>
                     ) : (
-                      <div className="border border-border rounded-md max-h-96 overflow-y-auto">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {availableLoads.map((load) => {
                           const isSelected = selectedLoadIds.has(load.id)
                           const notes = load.notes || ''
@@ -324,32 +327,31 @@ export default function CreateTripFromLoadsButton({ driverId }: CreateTripFromLo
                             <div
                               key={load.id}
                               onClick={() => toggleLoadSelection(load.id)}
-                              className={`p-4 border-b border-border cursor-pointer transition-colors ${
-                                isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted'
+                              className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                                isSelected 
+                                  ? 'border-primary bg-primary/10 shadow-md' 
+                                  : 'border-border hover:border-primary/50 hover:bg-muted/50'
                               }`}
                             >
-                              <div className="flex items-start gap-3">
-                                <div className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-bold text-lg text-foreground">Order {load.load_id}</span>
+                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                                   isSelected ? 'bg-primary border-primary' : 'border-border'
                                 }`}>
-                                  {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
+                                  {isSelected && <Check className="h-4 w-4 text-primary-foreground" />}
                                 </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center justify-between">
-                                    <span className="font-medium text-foreground">Order {load.load_id}</span>
-                                    <span className="font-bold text-foreground">{formatCurrency(load.price)}</span>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground mt-1">{load.customer}</p>
-                                  <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
-                                    <span>Payment: {load.payment_method}</span>
-                                    {additionalMoney > 0 && (
-                                      <span className="text-green-600 dark:text-green-400">
-                                        +{formatCurrency(additionalMoney)} additional
-                                      </span>
-                                    )}
-                                    <span>{new Date(load.created_at).toLocaleDateString()}</span>
-                                  </div>
-                                </div>
+                              </div>
+                              <div className="text-2xl font-bold text-primary mb-2">
+                                {formatCurrency(load.price)}
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-2">{load.customer}</p>
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="px-2 py-1 bg-secondary rounded">{load.payment_method}</span>
+                                {additionalMoney > 0 && (
+                                  <span className="px-2 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded">
+                                    +{formatCurrency(additionalMoney)}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           )
@@ -384,9 +386,11 @@ export default function CreateTripFromLoadsButton({ driverId }: CreateTripFromLo
                     <button
                       type="submit"
                       disabled={loading || selectedLoadIds.size === 0}
-                      className="flex-1 bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex-1 bg-primary text-primary-foreground py-3 px-6 rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-lg font-semibold"
                     >
-                      {loading ? 'Creating Trip...' : `Create Trip with ${selectedLoadIds.size} Order(s)`}
+                      {loading ? 'Creating Trip...' : selectedLoadIds.size === 0 
+                        ? 'Select Orders to Continue' 
+                        : `Create Trip with ${selectedLoadIds.size} Order${selectedLoadIds.size > 1 ? 's' : ''}`}
                     </button>
                     <button
                       type="button"
