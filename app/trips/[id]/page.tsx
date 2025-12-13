@@ -31,6 +31,15 @@ export default function TripDetailsPage() {
         `)
         .eq('id', id)
         .single()
+      
+      // Parse additional money from load notes if it's a local driver order
+      if (data?.is_local_driver_order && data?.loads?.[0]?.notes) {
+        const notes = data.loads[0].notes
+        const additionalMoneyMatch = notes.match(/Additional Cash: \$([\d.]+)/)
+        if (additionalMoneyMatch) {
+          data.additional_money = parseFloat(additionalMoneyMatch[1])
+        }
+      }
 
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/3c98a534-df79-472e-90e9-e6b096ba1309',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/trips/[id]/page.tsx:30',message:'fetchTrip query result',data:{hasError:!!error,hasData:!!data,errorMessage:error?.message,driverIsNull:!data?.driver,loadsIsNull:!data?.loads,loadsIsArray:Array.isArray(data?.loads)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
@@ -237,12 +246,98 @@ export default function TripDetailsPage() {
             <span>- Broker Fee</span>
             <span>-{formatCurrency(Number(trip.total_broker_fees) || 0)}</span>
           </div>
+          
+          {/* Show additional money for local driver orders */}
+          {trip.is_local_driver_order && trip.loads?.[0] && (() => {
+            const load = trip.loads[0]
+            const notes = load.notes || ''
+            const additionalMoneyMatch = notes.match(/Additional Cash: \$([\d.]+)/)
+            const additionalMoney = additionalMoneyMatch ? parseFloat(additionalMoneyMatch[1]) : 0
+            const paymentMethod = load.payment_method || 'billing'
+            
+            if (paymentMethod === 'cash' && additionalMoney > 0) {
+              return (
+                <>
+                  <div className="flex justify-between py-2 border-b">
+                    <span>Additional Money (Cash)</span>
+                    <span className="text-green-600 dark:text-green-400">+{formatCurrency(additionalMoney)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b font-medium">
+                    <span>Total Cash Collected</span>
+                    <span>{formatCurrency(Number(trip.total_invoice) + additionalMoney)}</span>
+                  </div>
+                </>
+              )
+            }
+            return null
+          })()}
+          
           <div className="flex justify-between py-2 border-b-2 font-bold">
             <span>Total Gross</span>
             <span>{formatCurrency((Number(trip.total_invoice) || 0) - (Number(trip.total_broker_fees) || 0))}</span>
           </div>
 
-          {driverType === 'owner_operator' && (
+          {/* Local Driver Order Breakdown */}
+          {trip.is_local_driver_order && (() => {
+            const load = trip.loads?.[0]
+            const notes = load?.notes || ''
+            const additionalMoneyMatch = notes.match(/Additional Cash: \$([\d.]+)/)
+            const additionalMoney = additionalMoneyMatch ? parseFloat(additionalMoneyMatch[1]) : 0
+            const paymentMethod = load?.payment_method || 'billing'
+            const totalGross = (Number(trip.total_invoice) || 0) - (Number(trip.total_broker_fees) || 0)
+            const dispatchFee = totalGross * 0.1
+            const grossAfterDispatch = totalGross - dispatchFee
+            const driverEarnings = paymentMethod === 'cash' 
+              ? grossAfterDispatch - additionalMoney 
+              : grossAfterDispatch
+            
+            return (
+              <>
+                <div className="pt-3">
+                  <p className="font-semibold text-foreground mb-2">
+                    Dispatch Fee (10%):
+                  </p>
+                  <div className="flex justify-between py-1">
+                    <span>- Dispatch Fee</span>
+                    <span>-{formatCurrency(dispatchFee)}</span>
+                  </div>
+                  <div className="flex justify-between py-2 bg-blue-50 dark:bg-blue-900/30 px-3 rounded font-bold">
+                    <span>Gross After Dispatch Fee</span>
+                    <span>{formatCurrency(grossAfterDispatch)}</span>
+                  </div>
+                </div>
+                
+                {paymentMethod === 'cash' && additionalMoney > 0 && (
+                  <div className="pt-3">
+                    <p className="font-semibold text-foreground mb-2">
+                      Additional Money (Deducted):
+                    </p>
+                    <div className="flex justify-between py-1">
+                      <span>- Additional Money</span>
+                      <span>-{formatCurrency(additionalMoney)}</span>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="pt-3">
+                  <p className="font-semibold text-foreground mb-2">
+                    Local Driver Payment:
+                  </p>
+                  <div className={`flex justify-between py-3 px-3 rounded font-bold ${driverEarnings < 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400' : 'bg-yellow-50 dark:bg-yellow-900/20 text-green-600 dark:text-green-400'}`}>
+                    <span>DRIVER EARNINGS</span>
+                    <span className="text-lg">{formatCurrency(driverEarnings)}</span>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between py-2 bg-muted px-3 rounded font-bold">
+                  <span>Dispatch Fee to Company (10%)</span>
+                  <span>{formatCurrency(dispatchFee)}</span>
+                </div>
+              </>
+            )
+          })()}
+
+          {driverType === 'owner_operator' && !trip.is_local_driver_order && (
             <>
               {/* Step 1: Local Towing Fee (deducted first) */}
               {trip.expenses?.find((e: any) => e?.category === 'local_towing') && (
