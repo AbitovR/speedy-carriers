@@ -29,6 +29,9 @@ import {
   Legend,
 } from 'recharts'
 import { useState, useMemo } from 'react'
+import { DonutChart, type DonutChartSegment } from '@/components/ui/donut-chart'
+import { AnimatePresence } from 'framer-motion'
+import { formatCurrency, cn } from '@/lib/utils'
 
 interface MetricCardProps {
   title: string
@@ -125,6 +128,111 @@ const MetricCard: React.FC<MetricCardProps> = ({
         {suffix}
       </div>
     </motion.div>
+  )
+}
+
+function RevenueBreakdownDonut({ revenueBreakdown }: { revenueBreakdown: Array<{ category: string; value: number; color: string }> }) {
+  const [hoveredSegment, setHoveredSegment] = useState<DonutChartSegment | null>(null)
+
+  // Convert revenue breakdown to donut chart segments
+  const donutData: DonutChartSegment[] = revenueBreakdown.map((item) => ({
+    value: item.value,
+    color: item.color,
+    label: item.category,
+  }))
+
+  const totalValue = donutData.reduce((sum, d) => sum + d.value, 0)
+  const activeSegment = hoveredSegment || null
+  const displayValue = activeSegment?.value ?? totalValue
+  const displayLabel = activeSegment?.label ?? 'Total Revenue'
+  const displayPercentage = activeSegment
+    ? ((activeSegment.value / totalValue) * 100)
+    : 100
+
+  return (
+    <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+      {/* Donut Chart */}
+      <div className="flex-shrink-0">
+        <DonutChart
+          data={donutData}
+          size={250}
+          strokeWidth={30}
+          animationDuration={1.2}
+          animationDelayPerSegment={0.05}
+          highlightOnHover={true}
+          onSegmentHover={setHoveredSegment}
+          centerContent={
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={displayLabel}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.2, ease: "circOut" }}
+                className="flex flex-col items-center justify-center text-center"
+              >
+                <p className="text-muted-foreground text-sm font-medium truncate max-w-[150px]">
+                  {displayLabel}
+                </p>
+                <p className="text-3xl font-bold text-foreground">
+                  {formatCurrency(displayValue)}
+                </p>
+                {activeSegment && (
+                  <p className="text-lg font-medium text-muted-foreground">
+                    [{displayPercentage.toFixed(1)}%]
+                  </p>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          }
+        />
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-col space-y-3 w-full md:w-auto min-w-[200px]">
+        {revenueBreakdown.map((item, index) => {
+          const total = revenueBreakdown.reduce((sum, i) => sum + i.value, 0)
+          const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0'
+          const isHovered = hoveredSegment?.label === item.category
+
+          return (
+            <motion.div
+              key={item.category}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.2 + index * 0.1, duration: 0.4 }}
+              className={cn(
+                "flex items-center justify-between p-3 rounded-md transition-all duration-200 cursor-pointer",
+                isHovered && "bg-muted"
+              )}
+              onMouseEnter={() => {
+                const segment = donutData.find(d => d.label === item.category)
+                if (segment) setHoveredSegment(segment)
+              }}
+              onMouseLeave={() => setHoveredSegment(null)}
+            >
+              <div className="flex items-center space-x-3">
+                <span
+                  className="h-4 w-4 rounded-full"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="text-sm font-medium text-foreground">
+                  {item.category}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-sm font-semibold text-foreground block">
+                  {formatCurrency(item.value)}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {percentage}%
+                </span>
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -394,42 +502,7 @@ export default function EnhancedDashboard({ data }: { data: DashboardData }) {
           <h2 className="text-xl font-bold text-foreground mb-6">
             Revenue Breakdown
           </h2>
-          <div className="space-y-4">
-            {revenueBreakdown.map((item, index) => {
-              const total = revenueBreakdown.reduce((sum, i) => sum + i.value, 0)
-              const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0'
-              return (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-sm font-medium text-foreground">
-                        {item.category}
-                      </span>
-                    </div>
-                    <span className="text-sm font-bold text-foreground">
-                      ${(item.value / 1000).toFixed(1)}k
-                    </span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${percentage}%` }}
-                      transition={{ delay: 0.6 + index * 0.1, duration: 0.8 }}
-                      className="h-full rounded-full"
-                      style={{ backgroundColor: item.color }}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {percentage}% of total revenue
-                  </span>
-                </div>
-              )
-            })}
-          </div>
+          <RevenueBreakdownDonut revenueBreakdown={revenueBreakdown} />
         </motion.div>
       </div>
 
