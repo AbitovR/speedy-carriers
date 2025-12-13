@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, Upload, Edit, FileText, DollarSign, TrendingUp, Award, Truck } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import TripUploadButton from '@/components/trip-upload-button'
+import LocalDriverOrderButton from '@/components/local-driver-order-button'
 import DeleteTripButton from '@/components/delete-trip-button'
 import { Database } from '@/lib/supabase/database.types'
 
@@ -95,7 +96,9 @@ export default async function DriverProfilePage({
               <p className="text-sm text-muted-foreground mt-1">
                 {typedDriver.driver_type === 'company_driver'
                   ? 'Company Driver (32%)'
-                  : 'Owner Operator (100% after 10% dispatch fee)'}
+                  : typedDriver.driver_type === 'owner_operator'
+                  ? 'Owner Operator (100% after 10% dispatch fee)'
+                  : 'Local Driver (100% after 10% dispatch fee)'}
               </p>
             </div>
             <div className="flex items-center gap-3 text-sm">
@@ -204,7 +207,11 @@ export default async function DriverProfilePage({
       <div className="bg-card rounded-lg shadow">
         <div className="px-6 py-4 border-b border flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">Trip History</h2>
-          <TripUploadButton driverId={id} driverType={typedDriver.driver_type as 'company_driver' | 'owner_operator'} />
+          {typedDriver.driver_type === 'local_driver' ? (
+            <LocalDriverOrderButton driverId={id} />
+          ) : (
+            <TripUploadButton driverId={id} driverType={typedDriver.driver_type as 'company_driver' | 'owner_operator'} />
+          )}
         </div>
 
         <div className="overflow-x-auto">
@@ -270,12 +277,18 @@ export default async function DriverProfilePage({
             <div className="px-6 py-12 text-center">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                No trips yet
+                No {typedDriver.driver_type === 'local_driver' ? 'orders' : 'trips'} yet
               </h3>
               <p className="text-muted-foreground mb-6">
-                Upload a trip file to get started
+                {typedDriver.driver_type === 'local_driver'
+                  ? 'Create an order to get started'
+                  : 'Upload a trip file to get started'}
               </p>
-              <TripUploadButton driverId={id} driverType={typedDriver.driver_type as 'company_driver' | 'owner_operator'} />
+              {typedDriver.driver_type === 'local_driver' ? (
+                <LocalDriverOrderButton driverId={id} />
+              ) : (
+                <TripUploadButton driverId={id} driverType={typedDriver.driver_type as 'company_driver' | 'owner_operator'} />
+              )}
             </div>
           )}
         </div>

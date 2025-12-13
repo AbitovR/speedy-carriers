@@ -13,7 +13,7 @@ export default function NewDriverPage() {
 
   const [formData, setFormData] = useState({
     name: '',
-    driver_type: 'company_driver' as 'company_driver' | 'owner_operator',
+    driver_type: 'company_driver' as 'company_driver' | 'owner_operator' | 'local_driver',
     email: '',
     phone: '',
     license_number: '',
@@ -107,17 +107,20 @@ export default function NewDriverPage() {
               required
               value={formData.driver_type}
               onChange={(e) =>
-                setFormData({ ...formData, driver_type: e.target.value as 'company_driver' | 'owner_operator' })
+                setFormData({ ...formData, driver_type: e.target.value as 'company_driver' | 'owner_operator' | 'local_driver' })
               }
               className="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-background text-foreground"
             >
               <option value="company_driver">Company Driver (32%)</option>
               <option value="owner_operator">Owner Operator (100% after 10% dispatch fee)</option>
+              <option value="local_driver">Local Driver (100% after 10% dispatch fee, no file upload)</option>
             </select>
             <p className="mt-2 text-sm text-muted-foreground">
               {formData.driver_type === 'company_driver'
                 ? 'Company driver receives 32% of gross revenue before expenses'
-                : 'Owner operator receives 100% of net revenue after 10% dispatch fee and expenses'}
+                : formData.driver_type === 'owner_operator'
+                ? 'Owner operator receives 100% of net revenue after 10% dispatch fee and expenses'
+                : 'Local driver receives 100% after 10% dispatch fee. Orders are created manually without file upload.'}
             </p>
           </div>
 
