@@ -8,3 +8,4 @@ ADD COLUMN IF NOT EXISTS hold_reason TEXT DEFAULT NULL;
 -- Create index for payment status filtering
 CREATE INDEX IF NOT EXISTS idx_trips_payment_status ON trips(payment_status);
 
+

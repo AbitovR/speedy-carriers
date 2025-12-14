@@ -67,3 +67,4 @@ CREATE POLICY "Users can delete their loads"
     loads.trip_id IS NULL
   );
 
+

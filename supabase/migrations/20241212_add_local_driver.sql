@@ -15,3 +15,4 @@ ALTER TABLE trips
   ALTER COLUMN file_name DROP NOT NULL,
   ALTER COLUMN file_url DROP NOT NULL;
 
+

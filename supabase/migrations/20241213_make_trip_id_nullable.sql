@@ -5,3 +5,4 @@ ALTER TABLE loads
 -- Add index for loads without trips (orphaned loads)
 CREATE INDEX IF NOT EXISTS idx_loads_trip_id_null ON loads(trip_id) WHERE trip_id IS NULL;
 
+
