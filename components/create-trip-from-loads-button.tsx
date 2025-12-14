@@ -61,35 +61,20 @@ export default function CreateTripFromLoadsButton({ driverId }: CreateTripFromLo
         throw error
       }
       
-      console.log('All loads without trips:', loads)
+      console.log('All loads without trips:', loads?.length || 0, loads)
       
-      // Filter to only loads that match local driver pattern
-      // But also show all if none match, to help debug
-      const localLoads = (loads || []).filter((load: any) => 
-        load.customer?.includes('Local Order') || 
-        load.vehicle === 'Local Driver' ||
-        load.vehicle?.includes('Local')
-      )
-      
-      console.log('Filtered local loads:', localLoads.length, localLoads)
-      
-      // If no local loads found but we have loads, show all of them for debugging
-      if (localLoads.length === 0 && loads && loads.length > 0) {
-        console.warn('No local driver loads found, but found loads:', loads)
-        // Show all loads for now to help debug
+      // Show ALL loads without trips - don't filter by pattern
+      // This makes it easier to see what's available
+      if (loads && loads.length > 0) {
         setAvailableLoads(loads)
+        // Clear any previous error messages
+        setMessage(null)
+      } else {
+        setAvailableLoads([])
         setMessage({ 
           type: 'error', 
-          text: `Found ${loads.length} order(s) but they don't match local driver pattern. Showing all orders.` 
+          text: 'No orders found. Create orders first and make sure to select "No Trip (Create Later)" when creating them.' 
         })
-      } else {
-        setAvailableLoads(localLoads || [])
-        if (localLoads.length === 0 && (!loads || loads.length === 0)) {
-          setMessage({ 
-            type: 'error', 
-            text: 'No orders found. Make sure to create orders without selecting a trip.' 
-          })
-        }
       }
     } catch (error) {
       console.error('Error fetching loads:', error)
