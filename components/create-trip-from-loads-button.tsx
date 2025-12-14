@@ -47,40 +47,53 @@ export default function CreateTripFromLoadsButton({ driverId }: CreateTripFromLo
     try {
       const supabase = createClient()
       
-      // Get all trips for this driver
-      const { data: trips } = await (supabase as any)
-        .from('trips')
-        .select('id')
-        .eq('driver_id', driverId)
-        .eq('is_local_driver_order', true)
-
-      const tripIds = trips?.map((t: any) => t.id) || []
-      
-      // Get loads that don't have a trip_id (are null)
-      // This is simpler - just get loads where trip_id IS NULL
-      let query = (supabase as any)
+      // Get all loads where trip_id IS NULL
+      // Don't filter by pattern - show all orphaned loads and let user see what's available
+      const { data: loads, error } = await (supabase as any)
         .from('loads')
         .select('*')
         .is('trip_id', null)
         .order('created_at', { ascending: false })
 
-      const { data: loads, error } = await query
-
       if (error) {
         console.error('Error fetching loads:', error)
+        setMessage({ type: 'error', text: `Error: ${error.message}` })
         throw error
       }
       
+      console.log('All loads without trips:', loads)
+      
       // Filter to only loads that match local driver pattern
+      // But also show all if none match, to help debug
       const localLoads = (loads || []).filter((load: any) => 
-        load.customer?.includes('Local Order') || load.vehicle === 'Local Driver'
+        load.customer?.includes('Local Order') || 
+        load.vehicle === 'Local Driver' ||
+        load.vehicle?.includes('Local')
       )
       
-      console.log('Available loads found:', localLoads.length, localLoads)
-      setAvailableLoads(localLoads || [])
+      console.log('Filtered local loads:', localLoads.length, localLoads)
+      
+      // If no local loads found but we have loads, show all of them for debugging
+      if (localLoads.length === 0 && loads && loads.length > 0) {
+        console.warn('No local driver loads found, but found loads:', loads)
+        // Show all loads for now to help debug
+        setAvailableLoads(loads)
+        setMessage({ 
+          type: 'error', 
+          text: `Found ${loads.length} order(s) but they don't match local driver pattern. Showing all orders.` 
+        })
+      } else {
+        setAvailableLoads(localLoads || [])
+        if (localLoads.length === 0 && (!loads || loads.length === 0)) {
+          setMessage({ 
+            type: 'error', 
+            text: 'No orders found. Make sure to create orders without selecting a trip.' 
+          })
+        }
+      }
     } catch (error) {
       console.error('Error fetching loads:', error)
-      setMessage({ type: 'error', text: `Failed to load available orders: ${error instanceof Error ? error.message : 'Unknown error'}` })
+      setMessage({ type: 'error', text: `Failed to load orders: ${error instanceof Error ? error.message : 'Unknown error'}` })
     } finally {
       setLoadingLoads(false)
     }
