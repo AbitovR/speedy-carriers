@@ -227,7 +227,7 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
         if (expenseError) throw expenseError
       } else {
         // No trip selected - create load without trip
-        tripData = { id: null }
+        tripData = null
       }
 
       // Create a load for this order
@@ -239,9 +239,13 @@ export default function LocalDriverOrderButton({ driverId }: LocalDriverOrderBut
         loadNotes += ' | Include in weekly statement'
       }
       
+      // Explicitly set trip_id to null if no trip
+      const tripIdForLoad = tripData ? tripData.id : null
+      console.log('Creating load with trip_id:', tripIdForLoad)
+      
       const { error: loadError } = await (supabase as any).from('loads').insert([
         {
-          trip_id: tripData.id || null, // Allow null for loads without trips
+          trip_id: tripIdForLoad, // Explicitly null if no trip selected
           load_id: formData.orderNumber,
           customer: `Local Order - ${formData.pickupLocation} to ${formData.dropoffLocation}`,
           vehicle: 'Local Driver',
