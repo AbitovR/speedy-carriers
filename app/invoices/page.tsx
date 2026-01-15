@@ -234,6 +234,46 @@ export default function InvoiceBuilderPage() {
       margin-bottom: 8px;
     }
     
+    .company-address {
+      font-size: 11px;
+      color: #6b7280;
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+    
+    .payment-section {
+      background: #f0f9ff;
+      border: 2px solid #3b82f6;
+      padding: 16px;
+      border-radius: 6px;
+      margin-top: 30px;
+    }
+    
+    .payment-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .payment-info {
+      color: #374151;
+      line-height: 1.8;
+    }
+    
+    .payment-method {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    
+    .payment-email {
+      color: #3b82f6;
+      font-weight: 600;
+    }
+    
     .invoice-title {
       font-size: 32px;
       font-weight: bold;
@@ -433,6 +473,10 @@ export default function InvoiceBuilderPage() {
         <div class="company-name">Speedy Carriers</div>
         <div class="info-row">Auto Carrier Services</div>
         <div class="info-row">Professional Car Hauling</div>
+        <div class="company-address">
+          414 PARLIN ST FL 1<br>
+          Philadelphia, PA 19116
+        </div>
       </div>
       <div>
         <div class="invoice-title">INVOICE</div>
@@ -525,6 +569,18 @@ export default function InvoiceBuilderPage() {
       <div style="color: #374151; white-space: pre-wrap;">${invoice.notes}</div>
     </div>
     ` : ''}
+    
+    <div class="payment-section">
+      <div class="payment-title">💳 Payment Information</div>
+      <div class="payment-info">
+        <div style="margin-bottom: 8px;">
+          <span class="payment-method">Zelle Payment:</span>
+        </div>
+        <div>
+          Send payment to: <span class="payment-email">info@spdcarriers.com</span>
+        </div>
+      </div>
+    </div>
     
     <div class="footer">
       <div>Thank you for your business!</div>
@@ -859,9 +915,20 @@ export default function InvoiceBuilderPage() {
               </CardHeader>
               <CardContent>
                 <div id="invoice-preview" className="space-y-6 p-6 bg-muted/30 rounded-lg">
-                  <div className="text-center space-y-2">
-                    <h2 className="text-2xl font-bold">AUTO CARRIER INVOICE</h2>
-                    <p className="text-muted-foreground">Invoice #{invoice.invoiceNumber}</p>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="text-2xl font-bold">Speedy Carriers</h2>
+                      <p className="text-sm text-muted-foreground">Auto Carrier Services</p>
+                      <p className="text-sm text-muted-foreground">Professional Car Hauling</p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        414 PARLIN ST FL 1<br />
+                        Philadelphia, PA 19116
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <h2 className="text-2xl font-bold">INVOICE</h2>
+                      <p className="text-muted-foreground">Invoice #{invoice.invoiceNumber}</p>
+                    </div>
                   </div>
 
                   <Separator />
@@ -938,6 +1005,18 @@ export default function InvoiceBuilderPage() {
                     <div className="flex justify-between text-lg">
                       <p className="font-bold">Total:</p>
                       <p className="font-bold text-primary">{formatCurrency(invoice.total)}</p>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="bg-blue-50 border-2 border-blue-500 rounded-lg p-4">
+                    <p className="font-semibold mb-2 text-sm flex items-center gap-2">
+                      💳 Payment Information
+                    </p>
+                    <div className="text-sm space-y-1">
+                      <p><span className="font-semibold">Zelle Payment:</span></p>
+                      <p>Send payment to: <span className="text-blue-600 font-semibold">info@spdcarriers.com</span></p>
                     </div>
                   </div>
                 </div>
