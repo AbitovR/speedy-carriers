@@ -179,31 +179,372 @@ export default function InvoiceBuilderPage() {
   const generatePDF = () => {
     setIsGenerating(true)
     setTimeout(() => {
-      const printContent = document.getElementById('invoice-preview')
-      if (printContent) {
-        const printWindow = window.open('', '', 'height=800,width=800')
-        if (printWindow) {
-          printWindow.document.write('<html><head><title>Invoice</title>')
-          printWindow.document.write('<style>')
-          printWindow.document.write(`
-            body { font-family: Arial, sans-serif; padding: 40px; }
-            .invoice-header { text-align: center; margin-bottom: 30px; }
-            .invoice-details { margin-bottom: 20px; }
-            .invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            .invoice-table th, .invoice-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-            .invoice-table th { background-color: #f4f4f4; }
-            .totals { text-align: right; margin-top: 20px; }
-            .totals div { margin: 5px 0; }
-          `)
-          printWindow.document.write('</style></head><body>')
-          printWindow.document.write(printContent.innerHTML)
-          printWindow.document.write('</body></html>')
-          printWindow.document.close()
+      const printWindow = window.open('', '', 'width=900,height=800')
+      if (printWindow) {
+        const invoiceHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice ${invoice.invoiceNumber}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    @page {
+      size: letter;
+      margin: 0.5in;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: white;
+      padding: 40px;
+    }
+    
+    .invoice-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 3px solid #1a1a1a;
+    }
+    
+    .company-info {
+      flex: 1;
+    }
+    
+    .company-name {
+      font-size: 28px;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+    
+    .invoice-title {
+      font-size: 32px;
+      font-weight: bold;
+      color: #1a1a1a;
+      text-align: right;
+      margin-bottom: 8px;
+    }
+    
+    .invoice-number {
+      font-size: 14px;
+      color: #666;
+      text-align: right;
+    }
+    
+    .details-section {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+      gap: 40px;
+    }
+    
+    .bill-to, .invoice-info {
+      flex: 1;
+    }
+    
+    .section-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .info-row {
+      margin-bottom: 6px;
+      color: #374151;
+    }
+    
+    .info-label {
+      font-weight: 600;
+      display: inline-block;
+      min-width: 80px;
+    }
+    
+    .route-section {
+      background: #f9fafb;
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 30px;
+    }
+    
+    .route-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: #1a1a1a;
+    }
+    
+    .route-item {
+      display: flex;
+      margin-bottom: 8px;
+      color: #374151;
+    }
+    
+    .route-label {
+      font-weight: 600;
+      min-width: 100px;
+    }
+    
+    .vehicles-section, .items-section {
+      margin-bottom: 30px;
+    }
+    
+    .section-header {
+      font-size: 16px;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .vehicle-item {
+      background: #f9fafb;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .vehicle-name {
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+    
+    .vehicle-vin {
+      font-size: 11px;
+      color: #6b7280;
+    }
+    
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    
+    .items-table thead {
+      background: #1a1a1a;
+      color: white;
+    }
+    
+    .items-table th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    
+    .items-table td {
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .items-table tbody tr:hover {
+      background: #f9fafb;
+    }
+    
+    .items-table .text-right {
+      text-align: right;
+    }
+    
+    .items-table .text-center {
+      text-align: center;
+    }
+    
+    .totals-section {
+      margin-top: 30px;
+      margin-left: auto;
+      width: 300px;
+    }
+    
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .total-row.total-final {
+      border-top: 3px solid #1a1a1a;
+      border-bottom: 3px solid #1a1a1a;
+      margin-top: 10px;
+      padding: 15px 0;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    
+    .total-label {
+      font-weight: 600;
+    }
+    
+    .total-amount {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    
+    .footer {
+      margin-top: 50px;
+      padding-top: 20px;
+      border-top: 2px solid #e5e7eb;
+      text-align: center;
+      color: #6b7280;
+      font-size: 11px;
+    }
+    
+    @media print {
+      body {
+        padding: 20px;
+      }
+      
+      .invoice-container {
+        max-width: 100%;
+      }
+      
+      @page {
+        margin: 0.5in;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    <div class="header">
+      <div class="company-info">
+        <div class="company-name">Speedy Carriers</div>
+        <div class="info-row">Auto Carrier Services</div>
+        <div class="info-row">Professional Car Hauling</div>
+      </div>
+      <div>
+        <div class="invoice-title">INVOICE</div>
+        <div class="invoice-number">Invoice #${invoice.invoiceNumber}</div>
+      </div>
+    </div>
+    
+    <div class="details-section">
+      <div class="bill-to">
+        <div class="section-title">Bill To:</div>
+        <div class="info-row"><span class="info-label">Name:</span>${invoice.customerName || 'N/A'}</div>
+        <div class="info-row"><span class="info-label">Email:</span>${invoice.customerEmail || 'N/A'}</div>
+        <div class="info-row"><span class="info-label">Phone:</span>${invoice.customerPhone || 'N/A'}</div>
+      </div>
+      <div class="invoice-info">
+        <div class="section-title">Invoice Details:</div>
+        <div class="info-row"><span class="info-label">Date:</span>${new Date(invoice.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+        <div class="info-row"><span class="info-label">Due Date:</span>${new Date(invoice.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+      </div>
+    </div>
+    
+    <div class="route-section">
+      <div class="route-title">Route Information</div>
+      <div class="route-item">
+        <span class="route-label">Pickup:</span>
+        <span>${invoice.pickupLocation || 'N/A'}</span>
+      </div>
+      <div class="route-item">
+        <span class="route-label">Delivery:</span>
+        <span>${invoice.deliveryLocation || 'N/A'}</span>
+      </div>
+    </div>
+    
+    ${invoice.vehicles.length > 0 ? `
+    <div class="vehicles-section">
+      <div class="section-header">Vehicles Transported</div>
+      ${invoice.vehicles.map(vehicle => `
+        <div class="vehicle-item">
+          <div class="vehicle-name">${vehicle.year || ''} ${vehicle.make || ''} ${vehicle.model || ''}</div>
+          <div class="vehicle-vin">VIN: ${vehicle.vin || 'N/A'}</div>
+        </div>
+      `).join('')}
+    </div>
+    ` : ''}
+    
+    ${invoice.items.length > 0 ? `
+    <div class="items-section">
+      <div class="section-header">Line Items</div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th class="text-center">Quantity</th>
+            <th class="text-right">Rate</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${invoice.items.map(item => `
+            <tr>
+              <td>${item.description || 'N/A'}</td>
+              <td class="text-center">${item.quantity}</td>
+              <td class="text-right">${formatCurrency(item.rate)}</td>
+              <td class="text-right">${formatCurrency(item.amount)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    ` : ''}
+    
+    <div class="totals-section">
+      <div class="total-row">
+        <span class="total-label">Subtotal:</span>
+        <span class="total-amount">${formatCurrency(invoice.subtotal)}</span>
+      </div>
+      <div class="total-row">
+        <span class="total-label">Tax (8%):</span>
+        <span class="total-amount">${formatCurrency(invoice.tax)}</span>
+      </div>
+      <div class="total-row total-final">
+        <span class="total-label">Total:</span>
+        <span class="total-amount">${formatCurrency(invoice.total)}</span>
+      </div>
+    </div>
+    
+    ${invoice.notes ? `
+    <div class="route-section" style="margin-top: 30px;">
+      <div class="route-title">Notes</div>
+      <div style="color: #374151; white-space: pre-wrap;">${invoice.notes}</div>
+    </div>
+    ` : ''}
+    
+    <div class="footer">
+      <div>Thank you for your business!</div>
+      <div style="margin-top: 8px;">This is an official invoice from Speedy Carriers</div>
+    </div>
+  </div>
+</body>
+</html>
+        `
+        
+        printWindow.document.write(invoiceHTML)
+        printWindow.document.close()
+        
+        // Wait for content to load before printing
+        setTimeout(() => {
           printWindow.print()
-        }
+        }, 250)
       }
       setIsGenerating(false)
-    }, 1000)
+    }, 500)
   }
 
   const resetInvoice = () => {
