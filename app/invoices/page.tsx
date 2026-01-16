@@ -50,9 +50,10 @@ interface InvoiceData {
   invoiceNumber: string
   date: string
   dueDate: string
-  customerName: string
-  customerEmail: string
-  customerPhone: string
+  brokerCompanyName: string
+  brokerEmail: string
+  brokerPhone: string
+  brokerAddress: string
   pickupLocation: string
   deliveryLocation: string
   vehicles: Vehicle[]
@@ -67,9 +68,10 @@ const defaultInvoice: InvoiceData = {
   invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
   date: new Date().toISOString().split('T')[0],
   dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-  customerName: "",
-  customerEmail: "",
-  customerPhone: "",
+  brokerCompanyName: "",
+  brokerEmail: "",
+  brokerPhone: "",
+  brokerAddress: "",
   pickupLocation: "",
   deliveryLocation: "",
   vehicles: [],
@@ -487,9 +489,10 @@ export default function InvoiceBuilderPage() {
     <div class="details-section">
       <div class="bill-to">
         <div class="section-title">Bill To:</div>
-        <div class="info-row"><span class="info-label">Name:</span>${invoice.customerName || 'N/A'}</div>
-        <div class="info-row"><span class="info-label">Email:</span>${invoice.customerEmail || 'N/A'}</div>
-        <div class="info-row"><span class="info-label">Phone:</span>${invoice.customerPhone || 'N/A'}</div>
+        <div class="info-row"><span class="info-label">Company:</span>${invoice.brokerCompanyName || 'N/A'}</div>
+        <div class="info-row"><span class="info-label">Email:</span>${invoice.brokerEmail || 'N/A'}</div>
+        <div class="info-row"><span class="info-label">Phone:</span>${invoice.brokerPhone || 'N/A'}</div>
+        <div class="info-row"><span class="info-label">Address:</span>${invoice.brokerAddress || 'N/A'}</div>
       </div>
       <div class="invoice-info">
         <div class="section-title">Invoice Details:</div>
@@ -537,7 +540,7 @@ export default function InvoiceBuilderPage() {
         <tbody>
           ${invoice.items.map(item => `
             <tr>
-              <td>${item.description || 'N/A'}</td>
+              <td style="background-color: #fef3c7; color: #92400e; font-weight: 600; padding: 12px;">${item.description || 'N/A'}</td>
               <td class="text-center">${item.quantity}</td>
               <td class="text-right">${formatCurrency(item.rate)}</td>
               <td class="text-right">${formatCurrency(item.amount)}</td>
@@ -633,43 +636,56 @@ export default function InvoiceBuilderPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
-                  Customer Information
+                  Broker Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="customerName">Customer Name</Label>
+                  <Label htmlFor="brokerCompanyName">Company Name</Label>
                   <Input
-                    id="customerName"
-                    placeholder="John Doe"
-                    value={invoice.customerName}
-                    onChange={(e) => setInvoice(prev => ({ ...prev, customerName: e.target.value }))}
+                    id="brokerCompanyName"
+                    placeholder="Broker Company Name"
+                    value={invoice.brokerCompanyName}
+                    onChange={(e) => setInvoice(prev => ({ ...prev, brokerCompanyName: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="customerEmail">Email</Label>
+                  <Label htmlFor="brokerEmail">Email</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="customerEmail"
+                      id="brokerEmail"
                       type="email"
-                      placeholder="john@example.com"
+                      placeholder="broker@example.com"
                       className="pl-10"
-                      value={invoice.customerEmail}
-                      onChange={(e) => setInvoice(prev => ({ ...prev, customerEmail: e.target.value }))}
+                      value={invoice.brokerEmail}
+                      onChange={(e) => setInvoice(prev => ({ ...prev, brokerEmail: e.target.value }))}
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="customerPhone">Phone</Label>
+                  <Label htmlFor="brokerPhone">Phone</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="customerPhone"
+                      id="brokerPhone"
                       placeholder="(555) 123-4567"
                       className="pl-10"
-                      value={invoice.customerPhone}
-                      onChange={(e) => setInvoice(prev => ({ ...prev, customerPhone: e.target.value }))}
+                      value={invoice.brokerPhone}
+                      onChange={(e) => setInvoice(prev => ({ ...prev, brokerPhone: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="brokerAddress">Address</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="brokerAddress"
+                      placeholder="123 Main St, City, State ZIP"
+                      className="pl-10"
+                      value={invoice.brokerAddress}
+                      onChange={(e) => setInvoice(prev => ({ ...prev, brokerAddress: e.target.value }))}
                     />
                   </div>
                 </div>
@@ -842,11 +858,15 @@ export default function InvoiceBuilderPage() {
                         >
                           {editingItem === item.id ? (
                             <>
-                              <Input
-                                placeholder="Description"
-                                value={item.description}
-                                onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                              />
+                              <div className="space-y-2">
+                                <Label className="text-xs text-muted-foreground">Description (Order Number)</Label>
+                                <Input
+                                  placeholder="Enter order number or description"
+                                  value={item.description}
+                                  onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                                  className="bg-yellow-50 border-yellow-300 focus:border-yellow-500"
+                                />
+                              </div>
                               <div className="grid grid-cols-3 gap-2">
                                 <Input
                                   type="number"
@@ -882,8 +902,8 @@ export default function InvoiceBuilderPage() {
                             <>
                               <div className="flex items-center justify-between">
                                 <div className="flex-1">
-                                  <p className="font-semibold">{item.description}</p>
-                                  <p className="text-sm text-muted-foreground">
+                                  <p className="font-semibold bg-yellow-100 text-yellow-800 px-2 py-1 rounded inline-block">{item.description}</p>
+                                  <p className="text-sm text-muted-foreground mt-1">
                                     {item.quantity} × {formatCurrency(item.rate)} = {formatCurrency(item.amount)}
                                   </p>
                                 </div>
@@ -936,9 +956,10 @@ export default function InvoiceBuilderPage() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="font-semibold mb-2">Bill To:</p>
-                      <p>{invoice.customerName || "Customer Name"}</p>
-                      <p>{invoice.customerEmail || "customer@email.com"}</p>
-                      <p>{invoice.customerPhone || "(555) 123-4567"}</p>
+                      <p>{invoice.brokerCompanyName || "Broker Company Name"}</p>
+                      <p>{invoice.brokerEmail || "broker@email.com"}</p>
+                      <p>{invoice.brokerPhone || "(555) 123-4567"}</p>
+                      <p>{invoice.brokerAddress || "Broker Address"}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold mb-2">Invoice Details:</p>
@@ -978,8 +999,8 @@ export default function InvoiceBuilderPage() {
                         {invoice.items.map((item) => (
                           <div key={item.id} className="flex justify-between text-sm bg-background p-2 rounded">
                             <div>
-                              <p>{item.description}</p>
-                              <p className="text-muted-foreground text-xs">
+                              <p className="bg-yellow-100 text-yellow-800 font-semibold px-2 py-1 rounded inline-block">{item.description}</p>
+                              <p className="text-muted-foreground text-xs mt-1">
                                 {item.quantity} × {formatCurrency(item.rate)}
                               </p>
                             </div>
